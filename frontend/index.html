@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDGUARD — Security Gateway Dashboard</title>
+  <meta name="description" content="MIDGUARD: Middleware Intelligent Defense Gateway for User-Agent Request Defense. A 5-phase AI security pipeline visualizer." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HEADER / NAVBAR
+═══════════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M14 2L3 7v8c0 6.075 4.75 11.75 11 13 6.25-1.25 11-6.925 11-13V7L14 2z" fill="url(#shieldGrad)" stroke="rgba(99,179,237,0.3)" stroke-width="0.5"/>
+          <path d="M10 14l3 3 6-6" stroke="#63b3ed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="shieldGrad" x1="3" y1="2" x2="25" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#1a3a5c"/>
+              <stop offset="100%" stop-color="#0f1f35"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">MIDGUARD</span>
+        <span class="brand-sub">Security Gateway</span>
+      </div>
+    </div>
+    <nav class="nav-pills">
+      <button class="nav-pill active" onclick="showView('demo')">Live Demo</button>
+      <button class="nav-pill" onclick="showView('architecture')">Architecture</button>
+      <button class="nav-pill" onclick="showView('audit')">Audit Log</button>
+    </nav>
+    <div class="header-status">
+      <span class="status-dot"></span>
+      <span class="status-label">ACTIVE</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STATS BAR
+═══════════════════════════════════════════════════════════════ -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-card">
+    <span class="stat-icon">📨</span>
+    <div class="stat-info">
+      <span class="stat-value" id="statTotal">0</span>
+      <span class="stat-label">Total Requests</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon" style="color:#48bb78">✅</span>
+    <div class="stat-info">
+      <span class="stat-value" id="statAllow" style="color:#48bb78">0</span>
+      <span class="stat-label">Allowed</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon" style="color:#fc8181">🚫</span>
+    <div class="stat-info">
+      <span class="stat-value" id="statBlock" style="color:#fc8181">0</span>
+      <span class="stat-label">Blocked</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon" style="color:#f6e05e">⚠️</span>
+    <div class="stat-info">
+      <span class="stat-value" id="statRedact" style="color:#f6e05e">0</span>
+      <span class="stat-label">Redacted</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon" style="color:#76e4f7">🛡️</span>
+    <div class="stat-info">
+      <span class="stat-value" id="statThreat">0.00</span>
+      <span class="stat-label">Avg Threat Score</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     VIEW: DEMO
+═══════════════════════════════════════════════════════════════ -->
+<main class="view active" id="viewDemo">
+  <div class="demo-layout">
+
+    <!-- LEFT: Request Builder -->
+    <section class="panel request-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <span class="panel-icon">📝</span>
+          Request Builder
+        </h2>
+        <span class="panel-badge">User Input</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Scenario Presets</label>
+        <div class="preset-grid" id="presetGrid"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="agentSelect">Registered Agent</label>
+        <select class="form-select" id="agentSelect">
+          <option value="standard">FinBot-Standard (standard tier, 60 req/min)</option>
+          <option value="elevated">InsureBot-Pro (elevated tier, 120 req/min)</option>
+          <option value="admin">AdminAgent (admin tier, 200 req/min)</option>
+          <option value="restricted">BasicAssist (restricted tier, 20 req/min)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="promptInput">User Prompt</label>
+        <textarea class="form-textarea" id="promptInput" rows="4" placeholder="Type your prompt here…">What is my current account balance?</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="actionInput">Action Type</label>
+        <select class="form-select" id="actionInput">
+          <option value="query">query</option>
+          <option value="read">read</option>
+          <option value="write">write</option>
+          <option value="execute">execute</option>
+          <option value="transfer">transfer</option>
+          <option value="delete">delete</option>
+          <option value="send_email">send_email</option>
+          <option value="access_admin">access_admin</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="contextInput">Context (optional)</label>
+        <textarea class="form-textarea" id="contextInput" rows="2" placeholder="e.g. User is authenticated. Session token: abc123."></textarea>
+      </div>
+
+      <div class="form-row">
+        <label class="toggle-label">
+          <input type="checkbox" id="injectPii" class="toggle-input">
+          <span class="toggle-switch"></span>
+          <span>Force PII in AI response</span>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="injectHalluc" class="toggle-input">
+          <span class="toggle-switch"></span>
+          <span>Force hallucination</span>
+        </label>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="runPipeline()">
+        <span class="submit-btn-icon">⚡</span>
+        Send Through MIDGUARD
+      </button>
+    </section>
+
+    <!-- RIGHT: Pipeline Visualizer -->
+    <section class="panel pipeline-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <span class="panel-icon">🔗</span>
+          Security Pipeline
+        </h2>
+        <div class="pipeline-status-badge" id="pipelineBadge">IDLE</div>
+      </div>
+
+      <div class="pipeline-flow" id="pipelineFlow">
+
+        <!-- Request node -->
+        <div class="flow-node source-node" id="nodeSource">
+          <div class="node-icon">👤</div>
+          <div class="node-label">User Request</div>
+        </div>
+
+        <div class="flow-connector" id="conn0">
+          <div class="flow-arrow"></div>
+          <div class="flow-packet" id="packet0"></div>
+        </div>
+
+        <!-- Phase 1 -->
+        <div class="phase-node" id="phase1" data-phase="1">
+          <div class="phase-header">
+            <span class="phase-num">1</span>
+            <div class="phase-title-wrap">
+              <span class="phase-name">Auth &amp; Identity</span>
+              <span class="phase-desc">API Key · Rate Limiter</span>
+            </div>
+            <div class="phase-status-icon" id="ps1">⏳</div>
+          </div>
+          <div class="phase-detail" id="pd1"></div>
+        </div>
+
+        <div class="flow-connector" id="conn1">
+          <div class="flow-arrow"></div>
+          <div class="flow-packet" id="packet1"></div>
+        </div>
+
+        <!-- Phase 2 -->
+        <div class="phase-node" id="phase2" data-phase="2">
+          <div class="phase-header">
+            <span class="phase-num">2</span>
+            <div class="phase-title-wrap">
+              <span class="phase-name">Policy Engine</span>
+              <span class="phase-desc">YAML rules · Keyword filter · Network rules</span>
+            </div>
+            <div class="phase-status-icon" id="ps2">⏳</div>
+          </div>
+          <div class="phase-detail" id="pd2"></div>
+        </div>
+
+        <div class="flow-connector" id="conn2">
+          <div class="flow-arrow"></div>
+          <div class="flow-packet" id="packet2"></div>
+        </div>
+
+        <!-- Phase 3 -->
+        <div class="phase-node" id="phase3" data-phase="3">
+          <div class="phase-header">
+            <span class="phase-num">3</span>
+            <div class="phase-title-wrap">
+              <span class="phase-name">Threat Detection</span>
+              <span class="phase-desc">Injection · Jailbreak · PII · Toxicity</span>
+            </div>
+            <div class="phase-status-icon" id="ps3">⏳</div>
+          </div>
+          <div class="phase-detail" id="pd3"></div>
+        </div>
+
+        <div class="flow-connector" id="conn3">
+          <div class="flow-arrow"></div>
+          <div class="flow-packet" id="packet3"></div>
+        </div>
+
+        <!-- Phase 4 -->
+        <div class="phase-node" id="phase4" data-phase="4">
+          <div class="phase-header">
+            <span class="phase-num">4</span>
+            <div class="phase-title-wrap">
+              <span class="phase-name">Enforcement Layer</span>
+              <span class="phase-desc">Final decision · Audit log</span>
+            </div>
+            <div class="phase-status-icon" id="ps4">⏳</div>
+          </div>
+          <div class="phase-detail" id="pd4"></div>
+        </div>
+
+        <div class="flow-connector" id="conn4">
+          <div class="flow-arrow"></div>
+          <div class="flow-packet" id="packet4"></div>
+        </div>
+
+        <!-- Phase 5 -->
+        <div class="phase-node" id="phase5" data-phase="5">
+          <div class="phase-header">
+            <span class="phase-num">5</span>
+            <div class="phase-title-wrap">
+              <span class="phase-name">Output Filter</span>
+              <span class="phase-desc">PII redact · Hallucination · Toxicity scan</span>
+            </div>
+            <div class="phase-status-icon" id="ps5">⏳</div>
+          </div>
+          <div class="phase-detail" id="pd5"></div>
+        </div>
+
+        <div class="flow-connector" id="conn5">
+          <div class="flow-arrow"></div>
+          <div class="flow-packet" id="packet5"></div>
+        </div>
+
+        <!-- AI Agent -->
+        <div class="flow-node agent-node" id="nodeAgent">
+          <div class="node-icon">🤖</div>
+          <div class="node-label">AI Agent</div>
+        </div>
+
+      </div><!-- /pipeline-flow -->
+
+      <!-- Response panel -->
+      <div class="response-box" id="responseBox" style="display:none">
+        <div class="response-header" id="responseHeader"></div>
+        <div class="response-body" id="responseBody"></div>
+      </div>
+
+    </section>
+  </div><!-- /demo-layout -->
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     VIEW: ARCHITECTURE
+═══════════════════════════════════════════════════════════════ -->
+<main class="view" id="viewArchitecture">
+  <div class="arch-container">
+    <h2 class="arch-title">System Architecture</h2>
+    <p class="arch-sub">MIDGUARD sits as a transparent security gateway between users and AI agents, enforcing a 5-phase pipeline on every request and every response.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-actor">
+        <div class="arch-actor-icon">👤</div>
+        <div class="arch-actor-label">Human User</div>
+        <div class="arch-actor-sub">Browser / API client</div>
+      </div>
+      <div class="arch-arrow-section">
+        <div class="arch-arrow-label">POST /v1/gateway</div>
+        <div class="arch-arrow-line">→</div>
+      </div>
+      <div class="arch-gateway">
+        <div class="arch-gw-title">🛡️ MIDGUARD</div>
+        <div class="arch-phases-row">
+          <div class="arch-phase-pill p1">
+            <b>Phase 1</b>
+            <span>Auth + Rate Limit</span>
+            <ul>
+              <li>API Key validation via PostgreSQL</li>
+              <li>Token Bucket rate limiter (Redis)</li>
+            </ul>
+          </div>
+          <div class="arch-ph-arrow">→</div>
+          <div class="arch-phase-pill p2">
+            <b>Phase 2</b>
+            <span>Policy Engine</span>
+            <ul>
+              <li>YAML rule evaluation</li>
+              <li>Keyword + action + network rules</li>
+            </ul>
+          </div>
+          <div class="arch-ph-arrow">→</div>
+          <div class="arch-phase-pill p3">
+            <b>Phase 3</b>
+            <span>Threat Detection</span>
+            <ul>
+              <li>Prompt injection (transformer)</li>
+              <li>Jailbreak patterns</li>
+              <li>PII scanner (spaCy NER)</li>
+              <li>Toxicity (LLM Guard)</li>
+            </ul>
+          </div>
+          <div class="arch-ph-arrow">→</div>
+          <div class="arch-phase-pill p4">
+            <b>Phase 4</b>
+            <span>Enforcement</span>
+            <ul>
+              <li>Combines Phase 2+3 signals</li>
+              <li>ALLOW / BLOCK / QUARANTINE</li>
+              <li>Writes audit log</li>
+            </ul>
+          </div>
+          <div class="arch-ph-arrow">↓ if ALLOW</div>
+          <div class="arch-phase-pill p5">
+            <b>Phase 5</b>
+            <span>Output Filter</span>
+            <ul>
+              <li>PII redaction in AI response</li>
+              <li>Hallucination check</li>
+              <li>Output toxicity scan</li>
+            </ul>
+          </div>
+        </div>
+        <div class="arch-infra-row">
+          <div class="arch-infra-pill">🐘 PostgreSQL<br><small>Agent registry + audit log</small></div>
+          <div class="arch-infra-pill">⚡ Redis<br><small>Token bucket rate limiter</small></div>
+          <div class="arch-infra-pill">🐍 FastAPI<br><small>Async Python gateway</small></div>
+          <div class="arch-infra-pill">🐳 Docker<br><small>Containerised deployment</small></div>
+        </div>
+      </div>
+      <div class="arch-arrow-section">
+        <div class="arch-arrow-label">Response (filtered)</div>
+        <div class="arch-arrow-line">←</div>
+      </div>
+      <div class="arch-actor">
+        <div class="arch-actor-icon">🤖</div>
+        <div class="arch-actor-label">AI Agent</div>
+        <div class="arch-actor-sub">GPT-4 / Claude / Gemini</div>
+      </div>
+    </div>
+
+    <div class="threat-grid">
+      <h3 class="threat-grid-title">Threat Coverage Matrix</h3>
+      <div class="threat-cards">
+        <div class="threat-card t-blue">
+          <div class="tc-code">T01–T03</div>
+          <div class="tc-name">Auth Threats</div>
+          <div class="tc-desc">Invalid API keys, revoked credentials, expired tokens</div>
+          <div class="tc-phase">Phase 1</div>
+        </div>
+        <div class="threat-card t-purple">
+          <div class="tc-code">T04–T06</div>
+          <div class="tc-name">Rate Abuse</div>
+          <div class="tc-desc">DDoS via API flooding, per-agent rate enforcement</div>
+          <div class="tc-phase">Phase 1</div>
+        </div>
+        <div class="threat-card t-indigo">
+          <div class="tc-code">T07</div>
+          <div class="tc-name">Policy Violation</div>
+          <div class="tc-desc">Forbidden keywords, unauthorized actions, disallowed domains</div>
+          <div class="tc-phase">Phase 2</div>
+        </div>
+        <div class="threat-card t-red">
+          <div class="tc-code">T08</div>
+          <div class="tc-name">Prompt Injection</div>
+          <div class="tc-desc">Adversarial instructions hidden in user input</div>
+          <div class="tc-phase">Phase 3</div>
+        </div>
+        <div class="threat-card t-orange">
+          <div class="tc-code">T09</div>
+          <div class="tc-name">Jailbreak</div>
+          <div class="tc-desc">DAN prompts, role-play bypasses, alignment circumvention</div>
+          <div class="tc-phase">Phase 3</div>
+        </div>
+        <div class="threat-card t-yellow">
+          <div class="tc-code">T10</div>
+          <div class="tc-name">Input PII</div>
+          <div class="tc-desc">Aadhaar, PAN, email, phone, credit card in prompt</div>
+          <div class="tc-phase">Phase 3</div>
+        </div>
+        <div class="threat-card t-pink">
+          <div class="tc-code">T11</div>
+          <div class="tc-name">Output PII Leak</div>
+          <div class="tc-desc">Personal data leaked by AI in its response</div>
+          <div class="tc-phase">Phase 5</div>
+        </div>
+        <div class="threat-card t-teal">
+          <div class="tc-code">T12</div>
+          <div class="tc-name">Hallucination</div>
+          <div class="tc-desc">AI fabricating facts, numbers and transactions</div>
+          <div class="tc-phase">Phase 5</div>
+        </div>
+        <div class="threat-card t-green">
+          <div class="tc-code">T13</div>
+          <div class="tc-name">Toxic Output</div>
+          <div class="tc-desc">Harmful, dangerous, or offensive AI-generated content</div>
+          <div class="tc-phase">Phase 5</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     VIEW: AUDIT LOG
+═══════════════════════════════════════════════════════════════ -->
+<main class="view" id="viewAudit">
+  <div class="audit-container">
+    <div class="audit-header-row">
+      <h2 class="audit-title">Audit Log</h2>
+      <button class="clear-btn" onclick="clearAudit()">Clear Log</button>
+    </div>
+    <div class="audit-table-wrap">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Time</th>
+            <th>Agent</th>
+            <th>Prompt (truncated)</th>
+            <th>Decision</th>
+            <th>Threat Score</th>
+            <th>Phases</th>
+            <th>Block Reason</th>
+          </tr>
+        </thead>
+        <tbody id="auditTableBody">
+          <tr class="audit-empty">
+            <td colspan="8">No requests yet. Run some scenarios in the Live Demo tab.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOAST
+═══════════════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

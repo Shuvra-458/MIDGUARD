@@ -1,0 +1,215 @@
+# =============================================================================
+#  MIDGUARD — config/policy_rules.yaml
+#  The Security Policy Ruleset
+#
+#  This file defines what is BLOCKED by the Policy Engine (Phase 2).
+#  It is read on server startup and evaluated against every request.
+#
+#  Security teams can update rules here WITHOUT touching any Python code.
+#  Changes take effect on next server restart.
+#
+#  Rule types:
+#    input_rules   — checked against the prompt text (what the user typed)
+#    action_rules  — checked against the action field (what the agent wants to do)
+#    network_rules — checked against URLs the agent tries to call
+#
+#  Rule structure:
+#    name:     unique identifier for this rule (shown in BLOCK response)
+#    pattern:  the string/pattern to match against
+#    match:    "contains" | "exact" | "startswith" | "endswith" | "regex"
+#    reason:   human-readable message returned to the caller when blocked
+#    severity: "low" | "medium" | "high" | "critical"
+# =============================================================================
+
+
+# =============================================================================
+#  INPUT RULES
+#  Evaluated against the prompt text (body.prompt).
+#  Block requests containing dangerous keywords or command patterns.
+# =============================================================================
+
+input_rules:
+
+  # ── Database Destruction Commands ────────────────────────────────────────
+  - name:     block_delete_all
+    pattern:  "delete all"
+    match:    contains
+    reason:   "Bulk deletion commands are not permitted by policy."
+    severity: critical
+
+  - name:     block_drop_table
+    pattern:  "drop table"
+    match:    contains
+    reason:   "Database schema modification commands are not permitted."
+    severity: critical
+
+  - name:     block_truncate
+    pattern:  "truncate table"
+    match:    contains
+    reason:   "Database truncation commands are not permitted."
+    severity: critical
+
+  - name:     block_drop_database
+    pattern:  "drop database"
+    match:    contains
+    reason:   "Database destruction commands are not permitted."
+    severity: critical
+
+  # ── Data Exfiltration Patterns ────────────────────────────────────────────
+  - name:     block_export_all
+    pattern:  "export all"
+    match:    contains
+    reason:   "Bulk data export commands are not permitted by policy."
+    severity: high
+
+  - name:     block_dump_data
+    pattern:  "dump all data"
+    match:    contains
+    reason:   "Data dump commands are not permitted by policy."
+    severity: high
+
+  - name:     block_send_to_external
+    pattern:  "send all data to"
+    match:    contains
+    reason:   "Sending data to external destinations is not permitted."
+    severity: critical
+
+  # ── System Access Attempts ────────────────────────────────────────────────
+  - name:     block_system_prompt_leak
+    pattern:  "reveal your system prompt"
+    match:    contains
+    reason:   "System configuration requests are not permitted."
+    severity: high
+
+  - name:     block_show_instructions
+    pattern:  "show me your instructions"
+    match:    contains
+    reason:   "System configuration requests are not permitted."
+    severity: high
+
+  - name:     block_ignore_instructions
+    pattern:  "ignore previous instructions"
+    match:    contains
+    reason:   "Prompt injection pattern detected — policy block."
+    severity: critical
+
+  - name:     block_ignore_all
+    pattern:  "ignore all instructions"
+    match:    contains
+    reason:   "Prompt injection pattern detected — policy block."
+    severity: critical
+
+  # ── Credential / Secret Requests ──────────────────────────────────────────
+  - name:     block_api_credentials
+    pattern:  "show me all api keys"
+    match:    contains
+    reason:   "Credential access requests are not permitted."
+    severity: critical
+
+  - name:     block_password_dump
+    pattern:  "list all passwords"
+    match:    contains
+    reason:   "Credential access requests are not permitted."
+    severity: critical
+
+  # ── Admin Escalation ──────────────────────────────────────────────────────
+  - name:     block_admin_override
+    pattern:  "override admin"
+    match:    contains
+    reason:   "Administrative override attempts are not permitted."
+    severity: critical
+
+  - name:     block_disable_security
+    pattern:  "disable security"
+    match:    contains
+    reason:   "Security configuration modification is not permitted."
+    severity: critical
+
+
+# =============================================================================
+#  ACTION RULES
+#  Evaluated against the action field (body.action).
+#  Block requests that specify forbidden operation types.
+# =============================================================================
+
+action_rules:
+
+  # ── Dangerous Data Operations ─────────────────────────────────────────────
+  - name:     block_bulk_export
+    pattern:  "bulk_export"
+    match:    exact
+    reason:   "Action 'bulk_export' is not permitted by policy."
+    severity: critical
+
+  - name:     block_bulk_delete
+    pattern:  "bulk_delete"
+    match:    exact
+    reason:   "Action 'bulk_delete' is not permitted by policy."
+    severity: critical
+
+  - name:     block_data_dump
+    pattern:  "data_dump"
+    match:    exact
+    reason:   "Action 'data_dump' is not permitted by policy."
+    severity: critical
+
+  - name:     block_schema_modify
+    pattern:  "schema_modify"
+    match:    exact
+    reason:   "Database schema modification is not permitted by policy."
+    severity: critical
+
+  # ── System Operations ─────────────────────────────────────────────────────
+  - name:     block_system_config
+    pattern:  "system_config"
+    match:    exact
+    reason:   "System configuration access is not permitted by policy."
+    severity: high
+
+  - name:     block_admin_reset
+    pattern:  "admin_reset"
+    match:    exact
+    reason:   "Administrative reset operations require direct human approval."
+    severity: critical
+
+  - name:     block_credential_access
+    pattern:  "credential_access"
+    match:    exact
+    reason:   "Credential access operations are not permitted via AI agents."
+    severity: critical
+
+  # ── Any action starting with "delete_" is blocked ─────────────────────────
+  - name:     block_all_delete_actions
+    pattern:  "delete_"
+    match:    startswith
+    reason:   "All deletion actions require direct human approval — not permitted via AI agent."
+    severity: high
+
+
+# =============================================================================
+#  NETWORK RULES
+#  Evaluated against any URL the AI agent attempts to call.
+#  Only domains on the allowed_domains list are permitted.
+#  Everything else is blocked by default (deny-by-default policy).
+# =============================================================================
+
+network_rules:
+
+  # Deny-by-default: if a URL does not match any allowed domain, it is blocked.
+  # The Policy Engine checks allowed_domains FIRST.
+  # If the domain is not in this list, the request is blocked.
+
+  allowed_domains:
+    - "api.openai.com"
+    - "api.anthropic.com"
+    - "localhost"
+    - "127.0.0.1"
+
+  # These domains are always blocked even if somehow matched above
+  blocked_domains:
+    - "pastebin.com"
+    - "ngrok.io"
+    - "webhook.site"
+    - "requestbin.com"
+    - "pipedream.net"
+    - "burpcollaborator.net"

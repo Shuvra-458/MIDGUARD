@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# Logs
+*.log
+
+# VSCode
+.vscode/
+
+# OS
+Thumbs.db
+
+# Pytest cache
+.pytest_cache/

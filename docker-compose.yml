@@ -1,0 +1,77 @@
+# =============================================================================
+#  MIDGUARD — docker-compose.yml
+#  Starts the complete MIDGUARD stack with one command:
+#
+#    docker-compose up
+#
+#  Services started:
+#    - postgres   → PostgreSQL database on port 5432
+#    - redis      → Redis cache/rate-limiter on port 6379
+#    - gateway    → MIDGUARD FastAPI server on port 8000
+# =============================================================================
+
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: midguard_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: midguard
+      POSTGRES_PASSWORD: midguard123
+      POSTGRES_DB: midguard_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U midguard -d midguard_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: midguard_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MIDGUARD Gateway ────────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: midguard_gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+asyncpg://midguard:midguard123@postgres:5432/midguard_db
+      REDIS_URL: redis://redis:6379/0
+      HMAC_SECRET_KEY: dev-secret-replace-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: uvicorn gateway.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+  redis_data:
