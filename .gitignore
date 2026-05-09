@@ -16,4 +16,4 @@ venv/
 Thumbs.db
 
 # Pytest cache
-.pytest_cache/
+.pytest_cache/.env
