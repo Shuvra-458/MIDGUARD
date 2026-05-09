@@ -325,7 +325,7 @@ async def run_output_filter(
         )
 
     # BLOCK — severe hallucination (response is dangerously wrong)
-    if hallucination_score >= 0.70:
+    if hallucination_score >= 0.50:
         logger.warning(f"[{short_id}] ✗ Output BLOCK — hallucination too severe")
         return OutputFilterResult(
             passed            = False,

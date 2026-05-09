@@ -29,6 +29,9 @@ import logging
 import random
 from typing import Optional
 
+import httpx
+from config.settings import settings
+
 logger = logging.getLogger("midguard.output.mock_agent")
 
 
@@ -64,6 +67,76 @@ _HALLUCINATION_RESPONSES = [
     "The RBI interest rate was raised to 15% last month, affecting your loan EMI significantly.",
     "According to our records, you made a transfer of ₹5,00,000 to account XXXX1234 on January 1st, which you did not make.",
 ]
+# ============================================================================
+# OPENROUTER API CLIENT
+# ============================================================================
+
+async def _call_openrouter(
+    prompt: str,
+    context: Optional[str] = None,
+) -> str:
+    """Makes the actual API To call OpenRouter Model"""
+
+    if not settings.OPENROUTER_API_KEY:
+        raise ValueError(
+            "OpenRouter API Key not configured"
+        )
+    
+    messages = []
+
+    # Add system message if context is provided
+    if context:
+        messages.append({
+            "role": "system",
+            "content": context
+        })
+    
+    # Add User Message
+    messages.append({
+        "role": "user",
+        "content": prompt
+    })
+
+    # Prepare the request payload
+    payload = {
+        "model": settings.OPENROUTER_MODEL,
+        "messages": messages,
+        "temperature": settings.LLM_TEMPERATURE,
+        "max_tokens": settings.LLM_MAX_TOKENS,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://midguard.local",
+        "X-Title": "MIDGUARD Security Gateway",
+    }
+
+    logger.info(
+        f"Calling OpenRouter API | Model: {settings.OPENROUTER_MODEL} |"
+        f"Messages: {len(messages)} | Prompt length: {len(prompt)} chars" 
+    )
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            f"{settings.OPENROUTER_BASE_URL}/chat/completions",
+            json=payload,
+            headers=headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+    
+    # Extract the response text
+    ai_response = data["choices"][0]["message"]["content"]
+
+    # Log token usage if available
+    if "usage" in data:
+        logger.info(
+            f"OpenRouter response received |"
+            f"Tokens: {data['usage'].get('total_tokens', 'N/A')} |"
+            f"Response length: {len(ai_response)} chars"
+        )
+    return ai_response
 
 
 # =============================================================================
@@ -114,14 +187,45 @@ async def call_mock_agent(
         response = random.choice(_HALLUCINATION_RESPONSES)
         logger.info("Mock agent returning hallucinated response (test mode)")
         return response
+    
+    # Call the actual OpenRouter API
 
-    # Normal mode: match prompt keywords to appropriate response
-    prompt_lower = prompt.lower()
+    try:
+        ai_response = await _call_openrouter(prompt=prompt, context=context)
+        return ai_response
+    
+    except ValueError as e:
+        logger.error(f"Configuration error: {e}")
+        return "I'm currently unavailable due to a configuration issue. Please contact support"
+    
+    except httpx.HTTPStatusError as e:
+        status_code = e.response.status_code
+        logger.error(
+            f"OpenRouter API Error | Status: {status_code} | "
+            f"Response: {e.response.text[:200]}"
+        )
 
-    for keyword, response in _CLEAN_RESPONSES.items():
-        if keyword in prompt_lower:
-            logger.info(f"Mock agent matched keyword '{keyword}'")
-            return response
-
-    # Default response if no keyword matched
-    return _CLEAN_RESPONSES["default"]
+        # Handle specific error codes
+        if status_code == 401:
+            return "I'm currently unavailable due to an authentication issue. Please contact support."
+        
+        elif status_code == 429:
+            return "I'm receiving too many requests right now. Please try again in a moment."
+        
+        elif status_code == 503:
+            return "The AI service is temporarily unavailable. Please try again shortly."
+        
+        else:
+            return "I encountered an error processing your request. Please try again."
+        
+    except httpx.TimeoutException:
+        logger.error("OpenRouter API request timed out")
+        return "I'm taking longer than expected to respond. Please try again."
+    
+    except httpx.RequestError as e:
+        logger.error(f"OpenRouter network error: {e}")
+        return "I'm unable to connect to my backend service. Please check your network and try again."
+    
+    except Exception as e:
+        logger.error(f"Unexpected error calling OpenRouter: {type(e).__name__}: {e}", exc_info=True)
+        return "I encountered an unexpected error. Please try again or contact support."
