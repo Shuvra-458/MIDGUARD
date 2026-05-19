@@ -41,7 +41,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, Request, HTTPException, Depends, Header
+from fastapi import FastAPI, Request, HTTPException, Depends, Header, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -63,7 +63,8 @@ from gateway.output.mock_agent import call_mock_agent
 from gateway.database import get_db, init_db, close_db
 from gateway.redis_client import get_redis, init_redis, close_redis
 from config.settings import settings
-
+from gateway.threat.emotion_detector import scan_emotion_cvv
+import time  # To calculate how fast DeBERTa is
 # =============================================================================
 #  LOGGING SETUP
 #  Structured logging so every event is traceable in production
@@ -323,6 +324,32 @@ async def health_check():
         },
     )
 
+# ── DEBERTA SCANNER TEST ENDPOINT ─────────────────────────────────────────
+@app.post(
+    "/v1/test/deberta",
+    summary="Test the local DeBERTa CVV Scanner",
+    tags=["Debug"],
+)
+async def test_deberta_scanner(
+    prompt: str = Body(..., embed=True, description="The text to scan for injection intent")
+):
+    """
+    Standalone test endpoint for Scanner 5 (DeBERTa).
+    Bypasses all other phases to show exactly what the local AI model is thinking.
+    """
+    start_time = time.time()
+    
+    # Call the scanner directly
+    result = await scan_emotion_cvv(prompt)
+    
+    duration_ms = round((time.time() - start_time) * 1000, 2)
+    
+    return {
+        "scanner_name": "ProtectAI DeBERTa-v3-base",
+        "model_location": "Local Container (Air-gapped)",
+        "processing_time_ms": duration_ms,
+        "analysis": result
+    }
 
 # ── ROOT ─────────────────────────────────────────────────────────────────────
 @app.get("/", tags=["System"], include_in_schema=False)
