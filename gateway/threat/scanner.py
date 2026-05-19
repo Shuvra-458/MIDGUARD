@@ -41,6 +41,7 @@ import base64
 from typing import Optional
 
 from gateway.models.schemas import ThreatResult
+from gateway.threat.emotion_detector import scan_emotion_cvv
 
 logger = logging.getLogger("midguard.threat.scanner")
 
@@ -343,6 +344,7 @@ async def run_threat_detection(
       2. PII (any PII = block)
       3. Toxicity
       4. Token smuggling
+      5. High CVV Emotion Score (Psychological Manipulation)
 
     Args:
         prompt:    The user's message to scan
@@ -355,11 +357,12 @@ async def run_threat_detection(
     logger.info(f"Threat detection: scanning {len(prompt)} chars")
 
     # Run all 4 scanners simultaneously
-    injection_r, pii_r, toxicity_r, smuggling_r = await asyncio.gather(
+    injection_r, pii_r, toxicity_r, smuggling_r, emotion_r = await asyncio.gather(
         scan_prompt_injection(prompt),
         scan_pii(prompt),
         scan_toxicity(prompt),
         scan_token_smuggling(prompt),
+        scan_emotion_cvv(prompt)
     )
 
     logger.debug(
@@ -367,6 +370,7 @@ async def run_threat_detection(
         f"pii: {pii_r['flagged']} | "
         f"toxicity: {toxicity_r['score']:.3f} | "
         f"smuggling: {smuggling_r['score']:.3f}"
+        f"cvv_emotion: {emotion_r.get('cvv_score', 0)}/100"
     )
 
     # Build detector_scores dict (always included in response for audit log)
@@ -375,6 +379,7 @@ async def run_threat_detection(
         "toxicity":   toxicity_r["score"],
         "smuggling":  smuggling_r["score"],
         "pii":        0.95 if pii_r["flagged"] else 0.0,
+        "emotion":    emotion_r.get("score", 0.0),
     }
 
     # Evaluate in priority order
@@ -420,6 +425,21 @@ async def run_threat_detection(
             reason=smuggling_r["reason"],
             layer="Threat Detection — Token Smuggling Scanner",
             triggered_detector="smuggling",
+            detector_scores=detector_scores,
+        )
+    
+    if emotion_r["flagged"] and emotion_r["score"] >= 0.75:
+        logger.warning(
+            f"THREAT BLOCKED - High CVV Score | "
+            f"emotion: {emotion_r.get('emotion')} | cvv: {emotion_r.get('cvv_score')}/100"
+        )
+
+        return ThreatResult(
+            blocked=True,
+            threat_score=emotion_r["score"],
+            reason=emotion_r["reason"],
+            layer="Threat Detection - AI Emotion & CVV Scanner",
+            triggered_detector="emotion_cvv",
             detector_scores=detector_scores,
         )
 

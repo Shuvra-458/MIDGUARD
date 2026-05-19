@@ -1,13 +1,5 @@
 # =============================================================================
 #  MIDGUARD — docker-compose.yml
-#  Starts the complete MIDGUARD stack with one command:
-#
-#    docker-compose up
-#
-#  Services started:
-#    - postgres   → PostgreSQL database on port 5432
-#    - redis      → Redis cache/rate-limiter on port 6379
-#    - gateway    → MIDGUARD FastAPI server on port 8000
 # =============================================================================
 
 version: "3.9"
@@ -32,6 +24,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ── pgAdmin (Database GUI) ────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: midguard_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@midguard.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
 
   # ── Redis ───────────────────────────────────────────────────────────────────
   redis:

@@ -162,14 +162,7 @@ _HALLUCINATION_SIGNALS = [
 def _check_hallucination(response: str, context: Optional[str]) -> float:
     """
     Estimates the hallucination score of the AI response.
-
-    If context is provided: checks how many specific claims in the response
-    are grounded in the context (basic faithfulness check).
-
-    If no context: checks for self-contradictions and uncertainty signals.
-
-    Returns:
-        float 0.0–1.0 (higher = more likely hallucinated)
+    Only runs word-overlap if context is a long reference document (>100 chars).
     """
     score = 0.0
 
@@ -180,12 +173,12 @@ def _check_hallucination(response: str, context: Optional[str]) -> float:
             logger.debug(f"Hallucination signal detected: score={signal_score}")
 
     # If context provided, do basic faithfulness check
-    if context and len(context.strip()) > 10:
+    # ONLY if context is long enough to be a reference document (> 100 chars)
+    # Short contexts like "You are a banker" will skip this to avoid false positives
+    if context and len(context.strip()) > 100:
         response_words = set(response.lower().split())
         context_words  = set(context.lower().split())
 
-        # Very rough faithfulness: what fraction of significant response words
-        # appear in the context?
         significant_response_words = {
             w for w in response_words
             if len(w) > 5 and w.isalpha()
@@ -193,7 +186,6 @@ def _check_hallucination(response: str, context: Optional[str]) -> float:
         if significant_response_words:
             overlap = len(significant_response_words & context_words)
             coverage = overlap / len(significant_response_words)
-            # Low coverage = response contains many words not in context = potential hallucination
             if coverage < 0.15:
                 score = max(score, 0.50)
                 logger.debug(f"Low context faithfulness: coverage={coverage:.2f}")
