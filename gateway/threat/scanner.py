@@ -186,44 +186,31 @@ async def scan_prompt_injection(prompt: str) -> dict:
 #  SCANNER 2 — PII DETECTION
 # =============================================================================
 
+# =============================================================================
+#  SCANNER 2 — PII DETECTION
+# =============================================================================
+
+# Import the actual PII scanner module
+from gateway.threat.pii_scanner import scan_for_pii as _run_pii_scanner
+
 async def scan_pii(prompt: str) -> dict:
     """
-    Detects PII using regex patterns + spaCy NER (when available).
-    Any PII found triggers an immediate BLOCK.
-
+    Detects PII using the dedicated pii_scanner.py module.
+    This includes regex patterns, spaCy NER, AND PII extraction intent detection.
+    
     Returns: {"flagged": bool, "pii_types": list, "reason": str}
     """
-    found_pii_types = []
-
-    # Regex pattern matching (always runs)
-    for pii_type, pattern in PII_PATTERNS.items():
-        if pattern.search(prompt):
-            found_pii_types.append(pii_type)
-
-    # spaCy NER (runs if model is available)
-    if SPACY_AVAILABLE and _nlp:
-        try:
-            loop = asyncio.get_event_loop()
-            doc = await loop.run_in_executor(None, _nlp, prompt)
-            spacy_map = {
-                "PERSON": "PERSON_NAME",
-                "DATE":   "DATE_OF_BIRTH",
-                "MONEY":  "FINANCIAL_AMOUNT",
-            }
-            for ent in doc.ents:
-                mapped = spacy_map.get(ent.label_)
-                if mapped and mapped not in found_pii_types:
-                    found_pii_types.append(mapped)
-        except Exception as e:
-            logger.error(f"spaCy NER error: {e}")
-
-    if found_pii_types:
+    result = await _run_pii_scanner(prompt)
+    
+    if result["score"] > 0.0 and result["pii_types"]:
         return {
             "flagged":   True,
-            "pii_types": found_pii_types,
-            "reason":    f"PII detected: {', '.join(found_pii_types)}",
+            "score": result["score"],
+            "pii_types": result["pii_types"],
+            "reason":    f"PII detected: {', '.join(result['pii_types'])}",
         }
-    return {"flagged": False, "pii_types": [], "reason": ""}
+    
+    return {"flagged": False, "score": 0.0, "pii_types": [], "reason": ""}
 
 
 # =============================================================================
@@ -393,15 +380,19 @@ async def run_threat_detection(
             triggered_detector="injection",
             detector_scores=detector_scores,
         )
-
+    
     if pii_r["flagged"]:
-        logger.warning(f"THREAT BLOCKED — PII | types: {pii_r['pii_types']}")
+        # Use the actual score from the scanner
+        pii_score = pii_r.get("score", 0.95)
+        detector_scores["pii"] = pii_score # Update the audit score
+
+        logger.warning(f"THREAT BLOCKED - PII | types: {pii_r['pii_types']} | score: {pii_score}")
         return ThreatResult(
             blocked=True,
-            threat_score=0.95,
+            threat_scope=pii_score,
             reason=pii_r["reason"],
             pii_types=pii_r["pii_types"],
-            layer="Threat Detection — PII Scanner",
+            layer="Threat Detection - PII Scanner",
             triggered_detector="pii",
             detector_scores=detector_scores,
         )

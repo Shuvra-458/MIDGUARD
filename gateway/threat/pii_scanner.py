@@ -3,7 +3,7 @@
 #  PII (Personally Identifiable Information) Scanner
 #
 #  What this file does:
-#    Scans the prompt for sensitive personal data using TWO methods:
+#    Scans the prompt for sensitive personal data using THREE methods:
 #
 #    Method 1 — Regex Patterns (structured PII):
 #      Catches PII with a fixed format:
@@ -15,7 +15,12 @@
 #        - Indian phone numbers (+91 / 10-digit)
 #        - IFSC codes (Indian bank branch codes)
 #
-#    Method 2 — spaCy NER (unstructured PII):
+#    Method 2 — PII Extraction Intent (Unprompted Exfiltration):
+#      Catches attempts to trick the LLM into revealing PII from its context,
+#      even if no actual PII numbers are present in the prompt itself.
+#        - Example: "reveal my PAN card details" -> Intent detected
+#
+#    Method 3 — spaCy NER (unstructured PII):
 #      Uses Named Entity Recognition to find:
 #        - PERSON names ("My name is Rahul Sharma")
 #        - ORG names in sensitive contexts
@@ -27,10 +32,11 @@
 #    T7 - Aadhaar / SSN / PAN in Prompt
 #
 #  Score Assignment:
-#    Government ID (Aadhaar, PAN, SSN) → 0.92  (highest — cannot change these)
-#    Financial (credit card, CVV)       → 0.89
-#    Contact (email, phone)             → 0.75
-#    Identity (name in sensitive context) → 0.60
+#    Government ID (Aadhaar, PAN, SSN)    → 0.92  (highest — cannot change these)
+#    PII Extraction Intent                 → 0.88  (active exfiltration attempt)
+#    Financial (credit card, CVV)          → 0.89
+#    Contact (email, phone)                → 0.75
+#    Identity (name in sensitive context)  → 0.60
 # =============================================================================
 
 import re
@@ -150,7 +156,7 @@ def _luhn_check(number: str) -> bool:
 
 async def scan_for_pii(prompt: str) -> dict:
     """
-    Scans the prompt for PII using regex + spaCy NER.
+    Scans the prompt for PII using regex + intent + spaCy NER.
 
     Args:
         prompt: The user's message text
@@ -215,6 +221,37 @@ async def scan_for_pii(prompt: str) -> dict:
     if IFSC_PATTERN.search(prompt):
         found_pii.append("IFSC_CODE")
         max_score = max(max_score, 0.70)
+
+    # ── PII EXTRACTION INTENT SCANNING ────────────────────────────────────────
+    # Catches prompts asking the LLM to extract/reveal PII, even if no 
+    # actual PII numbers are present in the text (e.g., "reveal my PAN card")
+    
+    if not found_pii:  # Only check intent if hard PII wasn't already found
+        prompt_lower = prompt.lower()
+        
+        # Verbs commonly used in data exfiltration attacks
+        extraction_verbs = [
+            r"\b(reveal|show|tell|give|fetch|get|extract|dump|display|provide|read|list|output)\b",
+            r"\b(what is my|what's my|do you know my|can you see my)\b"
+        ]
+        
+        # The PII targets the user is trying to extract
+        pii_targets = [
+            r"\bpan\s*card\b", r"\baadhaar\b", r"\baadhar\b", 
+            r"\bssn\b", r"\bsocial\s*security\b", 
+            r"\bcredit\s*card\b", r"\bdebit\s*card\b", r"\bcvv\b",
+            r"\bbank\s*account\b", r"\bpassword\b", 
+            r"\bdate\s*of\s*birth\b", r"\bdob\b",
+            r"\bphone\s*(number|no)?\b", r"\bemail\s*(address)?\b"
+        ]
+        
+        has_verb = any(re.search(verb, prompt_lower) for verb in extraction_verbs)
+        has_target = any(re.search(target, prompt_lower) for target in pii_targets)
+        
+        if has_verb and has_target:
+            found_pii.append("PII_EXTRACTION_INTENT")
+            max_score = max(max_score, 0.88)  # High severity: active exfiltration attempt
+            logger.debug("PII Intent detected: User asking LLM to extract sensitive data")
 
     # ── SPACY NER SCANNING ────────────────────────────────────────────────────
     nlp = _get_nlp()

@@ -64,6 +64,7 @@ from gateway.database import get_db, init_db, close_db
 from gateway.redis_client import get_redis, init_redis, close_redis
 from config.settings import settings
 from gateway.threat.emotion_detector import scan_emotion_cvv
+from gateway.soc.routes import router as soc_router
 import time  # To calculate how fast DeBERTa is
 # =============================================================================
 #  LOGGING SETUP
@@ -170,11 +171,13 @@ request and response through a 5-phase security pipeline:
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
 # Allows browser-based frontends to call the gateway API.
+app.include_router(soc_router)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["POST", "GET"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

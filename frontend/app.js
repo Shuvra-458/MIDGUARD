@@ -430,234 +430,74 @@ async function runPipeline() {
 
     const requestId = uuid();
     const agent = AGENT_REGISTRY[agentKey];
-    const isRateLimitTest = context === 'RATE_LIMIT_TEST';
 
     resetPipeline();
     $('pipelineBadge').textContent = 'RUNNING';
     $('pipelineBadge').classList.add('running');
 
-    let finalDecision = 'ALLOW';
-    let finalReason = '';
-    let threatScore = 0;
-    let phasesCompleted = [];
-
-    // ─── PHASE 1 ─────────────────────────────────────────────────
-    setPhaseState(1, 'scanning');
-    setPhaseIcon(1, '🔄');
-    await sleep(600);
-
-    // 1a: API key auth (always pass in simulation — agent is valid if it's in registry)
-    const authPassed = true;
-    // 1b: Rate limit
-    const rateLimitExceeded = isRateLimitTest;
-
-    if (rateLimitExceeded) {
-        setPhaseState(1, 'blocked');
-        setPhaseIcon(1, '❌');
-        showPhaseDetail(1, `
-      ${detailRow('API Key', '✓ Valid', 'pass')}
-      ${detailRow('Agent', agent.name)}
-      ${detailRow('Rate Limit', `${agent.rateLimit} req/min`)}
-      ${detailRow('Status', '✗ EXCEEDED', 'fail')}
-      ${detailRow('Retry After', '60 seconds')}
-    `);
-        finalDecision = 'BLOCK';
-        finalReason = 'Rate limit exceeded';
-        threatScore = 0.0;
-        phasesCompleted = ['auth'];
-        // Skip remaining phases
-        [2, 3, 4, 5].forEach(n => setPhaseState(n, 'skipped'));
-        await finalize(requestId, agent, prompt, finalDecision, finalReason, threatScore, phasesCompleted, null);
-        return;
+    // Animate all 5 phases to "scanning"
+    for (let i = 1; i <= 5; i++) {
+        setPhaseState(i, 'scanning');
+        setPhaseIcon(i, '🔄');
     }
 
-    setPhaseState(1, 'passed');
-    setPhaseIcon(1, '✅');
-    showPhaseDetail(1, `
-    ${detailRow('API Key', '✓ Valid', 'pass')}
-    ${detailRow('Agent', agent.name)}
-    ${detailRow('Role', agent.role)}
-    ${detailRow('Rate Limit', `${agent.rateLimit} req/min`)}
-    ${detailRow('Rate Status', '✓ OK', 'pass')}
-  `);
-    phasesCompleted.push('auth', 'rate_limit');
-    await animatePacket(0);
+    try {
+        // ─── REAL API CALL TO MIDGUARD BACKEND ───
+        const res = await fetch('http://localhost:8000/v1/gateway', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-API-Key': 'msk_v1_e1d2dfbbecb64a1db14544806da45bfc96f371871aa94a7187c74e881d378b61' // <-- CHANGE THIS
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                action: action,
+                context: context,
+                inject_pii_response: injectPii,
+                inject_hallucination: injectHalluc
+            })
+        });
 
-    // ─── PHASE 2 ─────────────────────────────────────────────────
-    setPhaseState(2, 'scanning');
-    setPhaseIcon(2, '🔄');
-    await sleep(500);
+        const data = await res.json();
+        const decision = data.decision || 'BLOCK';
+        const threatScore = data.threat_score || 0;
+        const reason = data.reason || '';
+        const phases = data.phases_completed || [];
 
-    const promptLower = prompt.toLowerCase();
-    let policyBlocked = false;
-    let policyRule = '';
+        // Light up the UI phases based on real backend response
+        phases.forEach((phase, index) => {
+            const phaseNum = index + 1;
+            if (phaseNum <= 5) {
+                // If the request was blocked, make the LAST phase red
+                const isBlocked = decision === 'BLOCK' && index === phases.length - 1;
+                setPhaseState(phaseNum, isBlocked ? 'blocked' : 'passed');
+                setPhaseIcon(phaseNum, isBlocked ? '❌' : '✅');
+                
+                // Show real threat score in Phase 3
+                if(phaseNum === 3) {
+                    showPhaseDetail(3, `
+                        ${detailRow('DeBERTa/CVV', data.detector_scores?.cvv_score !== undefined ? `${data.detector_scores.cvv_score}/100` : '✓ clean', threatScore > 0.7 ? 'fail' : 'pass')}
+                        ${detailRow('Final Score', threatScore.toFixed(2), threatScore > 0.7 ? 'fail' : 'pass')}
+                    `);
+                }
+            }
+        });
 
-    // Keyword check
-    for (const kw of FORBIDDEN_KEYWORDS) {
-        if (promptLower.includes(kw)) {
-            policyBlocked = true;
-            policyRule = `blocked_keyword: "${kw}"`;
-            break;
+        // If blocked early, skip the remaining phases in the UI
+        if (decision === 'BLOCK') {
+            for (let i = phases.length + 1; i <= 5; i++) setPhaseState(i, 'skipped');
         }
+
+        // Pass the real AI response to the UI
+        await finalize(requestId, agent, prompt, decision, reason, threatScore, phases, data.ai_response);
+
+    } catch (error) {
+        toast('Failed to connect to MIDGUARD backend.', '🚨');
+        console.error(error);
+        state.running = false;
+        $('submitBtn').disabled = false;
+        $('pipelineBadge').textContent = 'ERROR';
     }
-
-    // Action check
-    if (!policyBlocked) {
-        const forbidden = FORBIDDEN_ACTIONS[agent.tier] || [];
-        if (forbidden.includes(action)) {
-            policyBlocked = true;
-            policyRule = `forbidden_action: "${action}" not allowed for tier "${agent.tier}"`;
-        }
-    }
-
-    if (policyBlocked) {
-        setPhaseState(2, 'blocked');
-        setPhaseIcon(2, '⚠️');
-        showPhaseDetail(2, `
-      ${detailRow('Input rules', '✗ TRIGGERED', 'fail')}
-      ${detailRow('Rule', policyRule)}
-      ${detailRow('Decision', 'BLOCKED — passing to Phase 4', 'warn')}
-    `);
-        finalDecision = 'BLOCK';
-        finalReason = `Policy Engine blocked: ${policyRule}`;
-        threatScore = 0.45;
-    } else {
-        setPhaseState(2, 'passed');
-        setPhaseIcon(2, '✅');
-        showPhaseDetail(2, `
-      ${detailRow('Input rules', '✓ PASS', 'pass')}
-      ${detailRow('Action rules', '✓ PASS', 'pass')}
-      ${detailRow('Network rules', '✓ PASS', 'pass')}
-      ${detailRow('Tier', agent.tier)}
-    `);
-    }
-    phasesCompleted.push('policy');
-    await animatePacket(1);
-
-    // ─── PHASE 3 ─────────────────────────────────────────────────
-    setPhaseState(3, 'scanning');
-    setPhaseIcon(3, '🔄');
-    await sleep(700);
-
-    let injectionScore = 0, jailbreakScore = 0, piiScore = 0, toxicityScore = 0;
-    let piiTypes = [];
-    let triggeredDetector = null;
-
-    // Injection detection
-    for (const pat of INJECTION_PATTERNS) {
-        if (pat.test(prompt)) { injectionScore = 0.91; triggeredDetector = 'PROMPT_INJECTION'; break; }
-    }
-    // Jailbreak detection
-    for (const pat of JAILBREAK_PATTERNS) {
-        if (pat.test(prompt)) { jailbreakScore = 0.88; triggeredDetector = triggeredDetector || 'JAILBREAK'; break; }
-    }
-    // PII scanning
-    for (const { pattern, type, score } of PII_PATTERNS) {
-        if (pattern.test(prompt)) { piiScore = Math.max(piiScore, score); piiTypes.push(type); triggeredDetector = triggeredDetector || 'PII'; }
-    }
-    // Toxicity
-    for (const kw of TOXICITY_KEYWORDS) {
-        if (promptLower.includes(kw)) { toxicityScore = 0.88; triggeredDetector = triggeredDetector || 'TOXICITY'; break; }
-    }
-
-    const compositeScore = Math.max(injectionScore, jailbreakScore, piiScore, toxicityScore);
-    const threatBlocked = compositeScore >= 0.80;
-
-    if (compositeScore > 0) {
-        setPhaseState(3, threatBlocked ? 'blocked' : 'passed');
-        setPhaseIcon(3, threatBlocked ? '⚠️' : '⚠️');
-        showPhaseDetail(3, `
-      ${detailRow('Injection', injectionScore > 0 ? injectionScore.toFixed(2) : '✓ clean', injectionScore > 0 ? 'fail' : 'pass')}
-      ${detailRow('Jailbreak', jailbreakScore > 0 ? jailbreakScore.toFixed(2) : '✓ clean', jailbreakScore > 0 ? 'fail' : 'pass')}
-      ${detailRow('PII', piiScore > 0 ? `${piiTypes.join(', ')} (${piiScore.toFixed(2)})` : '✓ clean', piiScore > 0 ? 'warn' : 'pass')}
-      ${detailRow('Toxicity', toxicityScore > 0 ? toxicityScore.toFixed(2) : '✓ clean', toxicityScore > 0 ? 'fail' : 'pass')}
-      ${detailRow('Composite Score', compositeScore.toFixed(2), compositeScore > 0.7 ? 'fail' : 'warn')}
-      ${piiTypes.length ? detailRow('PII Types', piiTypes.join(', '), 'warn') : ''}
-    `);
-        if (!finalDecision || finalDecision === 'ALLOW') {
-            finalDecision = threatBlocked ? 'BLOCK' : 'ALLOW';
-            finalReason = threatBlocked
-                ? `Threat Detection blocked: ${triggeredDetector} (score: ${compositeScore.toFixed(2)})`
-                : '';
-        }
-        threatScore = Math.max(threatScore, compositeScore);
-    } else {
-        setPhaseState(3, 'passed');
-        setPhaseIcon(3, '✅');
-        showPhaseDetail(3, `
-      ${detailRow('Injection', '✓ clean', 'pass')}
-      ${detailRow('Jailbreak', '✓ clean', 'pass')}
-      ${detailRow('PII', '✓ clean', 'pass')}
-      ${detailRow('Toxicity', '✓ clean', 'pass')}
-      ${detailRow('Composite Score', '0.00', 'pass')}
-    `);
-    }
-    phasesCompleted.push('threat_detection');
-    await animatePacket(2);
-
-    // ─── PHASE 4 ─────────────────────────────────────────────────
-    setPhaseState(4, 'scanning');
-    setPhaseIcon(4, '🔄');
-    await sleep(400);
-
-    const enforcement = policyBlocked || (compositeScore >= 0.80) ? 'BLOCK' : 'ALLOW';
-    if (!finalDecision || finalDecision !== 'BLOCK') finalDecision = enforcement;
-
-    setPhaseState(4, enforcement === 'BLOCK' ? 'blocked' : 'passed');
-    setPhaseIcon(4, enforcement === 'BLOCK' ? '❌' : '✅');
-    showPhaseDetail(4, `
-    ${detailRow('Policy signal', policyBlocked ? '✗ BLOCKED' : '✓ PASS', policyBlocked ? 'fail' : 'pass')}
-    ${detailRow('Threat signal', compositeScore > 0 ? `score ${compositeScore.toFixed(2)}` : '✓ clean', compositeScore > 0.5 ? 'fail' : 'pass')}
-    ${detailRow('Enforcement', enforcement, enforcement === 'BLOCK' ? 'fail' : 'pass')}
-    ${detailRow('Audit log', '✓ written', 'pass')}
-  `);
-    phasesCompleted.push('enforcement');
-    await animatePacket(3);
-
-    if (enforcement === 'BLOCK') {
-        [5].forEach(n => setPhaseState(n, 'skipped'));
-        await finalize(requestId, agent, prompt, 'BLOCK', finalReason, threatScore, phasesCompleted, null);
-        return;
-    }
-
-    // ─── PHASE 5 ─────────────────────────────────────────────────
-    setPhaseState(5, 'scanning');
-    setPhaseIcon(5, '🔄');
-    await sleep(600);
-
-    const aiRaw = mockAgent(prompt, injectPii, injectHalluc);
-    const output = runOutputFilter(aiRaw, context);
-
-    let p5class = output.decision === 'BLOCK' ? 'blocked' : 'passed';
-    setPhaseState(5, p5class);
-    setPhaseIcon(5, output.decision === 'BLOCK' ? '❌' : output.decision === 'REDACT' ? '⚠️' : '✅');
-    showPhaseDetail(5, `
-    ${detailRow('PII scan', output.piiFound.length ? `⚠ ${output.piiFound.join(', ')}` : '✓ clean', output.piiFound.length ? 'warn' : 'pass')}
-    ${detailRow('Hallucination', output.hallScore > 0 ? output.hallScore.toFixed(2) : '✓ clean', output.hallScore > 0.4 ? 'warn' : 'pass')}
-    ${detailRow('Output toxicity', output.toxScore > 0 ? output.toxScore.toFixed(2) : '✓ clean', output.toxScore > 0 ? 'fail' : 'pass')}
-    ${detailRow('Decision', output.decision, output.decision === 'PASS' ? 'pass' : output.decision === 'REDACT' ? 'warn' : 'fail')}
-    ${output.redactions ? detailRow('Redactions', output.redactions) : ''}
-  `);
-    phasesCompleted.push('output_filter');
-    await animatePacket(4);
-
-    if (output.decision === 'BLOCK') {
-        finalDecision = 'BLOCK';
-        finalReason = output.reason;
-        threatScore = Math.max(threatScore, output.toxScore, output.hallScore);
-        await finalize(requestId, agent, prompt, 'BLOCK', finalReason, threatScore, phasesCompleted, null);
-        return;
-    }
-
-    if (output.decision === 'REDACT') {
-        finalDecision = 'REDACT';
-        finalReason = output.reason;
-    }
-
-    await animatePacket(5);
-    $('nodeAgent').style.opacity = '1';
-
-    await finalize(requestId, agent, prompt, finalDecision, finalReason, threatScore, phasesCompleted, output.safe);
 }
 
 async function finalize(requestId, agent, prompt, decision, reason, threatScore, phases, aiResponse) {
