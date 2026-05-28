@@ -52,7 +52,7 @@ logger = logging.getLogger("midguard.threat.scanner")
 
 try:
     from llm_guard.input_scanners import PromptInjection, Toxicity
-    LLM_GUARD_AVAILABLE = True
+    LLM_GUARD_AVAILABLE = False
     logger.info("LLM Guard loaded — transformer-based detection active")
 except ImportError:
     LLM_GUARD_AVAILABLE = False
@@ -63,7 +63,7 @@ except ImportError:
 
 try:
     import spacy
-    _nlp = spacy.load("en_core_web_lg")
+    _nlp = spacy.load("en_core_web_sm")
     SPACY_AVAILABLE = True
     logger.info("spaCy en_core_web_lg loaded — NER-based PII detection active")
 except (ImportError, OSError):
@@ -286,15 +286,25 @@ async def scan_token_smuggling(prompt: str) -> dict:
         signals.append("unicode_homoglyphs")
 
     # Check 3: Base64-encoded injection
+    # Check 3: Base64-encoded injection
     b64_pattern = re.compile(r'[A-Za-z0-9+/]{20,}={0,2}')
     for match in b64_pattern.findall(prompt):
         try:
-            decoded = base64.b64decode(match + "==").decode("utf-8", errors="ignore")
+            # Strip existing padding so we don't create invalid Base64 (e.g., "Lg==" + "==" = "Lg=====")
+            clean_match = match.rstrip("=")
+            # Add correct padding back to make the length a multiple of 4
+            padding = 4 - (len(clean_match) % 4)
+            if padding != 4:
+                decoded = base64.b64decode(clean_match + ("=" * padding)).decode("utf-8", errors="ignore")
+            else:
+                decoded = base64.b64decode(clean_match).decode("utf-8", errors="ignore")
+                
             if any(kw in decoded.lower() for kw in INJECTION_KEYWORDS[:8]):
                 signals.append("base64_encoded_injection")
+                logger.warning(f"Base64 decoded payload: {decoded[:80]}...")
                 break
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Base64 decode attempt failed safely: {e}")
 
     # Check 4: Mixed Unicode scripts (Latin + Cyrillic/Greek mix)
     latin_count    = sum(1 for c in prompt if 'LATIN'    in unicodedata.name(c, ''))
@@ -389,7 +399,7 @@ async def run_threat_detection(
         logger.warning(f"THREAT BLOCKED - PII | types: {pii_r['pii_types']} | score: {pii_score}")
         return ThreatResult(
             blocked=True,
-            threat_scope=pii_score,
+            threat_score=pii_score,
             reason=pii_r["reason"],
             pii_types=pii_r["pii_types"],
             layer="Threat Detection - PII Scanner",
@@ -408,7 +418,7 @@ async def run_threat_detection(
             detector_scores=detector_scores,
         )
 
-    if smuggling_r["flagged"] and smuggling_r["score"] > 0.60:
+    if smuggling_r["flagged"] and smuggling_r["score"] >= 0.60:
         logger.warning(f"THREAT BLOCKED — Token Smuggling | score: {smuggling_r['score']}")
         return ThreatResult(
             blocked=True,

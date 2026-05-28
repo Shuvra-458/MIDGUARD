@@ -67,6 +67,7 @@ _HALLUCINATION_RESPONSES = [
     "The RBI interest rate was raised to 15% last month, affecting your loan EMI significantly.",
     "According to our records, you made a transfer of ₹5,00,000 to account XXXX1234 on January 1st, which you did not make.",
 ]
+
 # ============================================================================
 # OPENROUTER API CLIENT
 # ============================================================================
@@ -75,7 +76,7 @@ async def _call_openrouter(
     prompt: str,
     context: Optional[str] = None,
 ) -> str:
-    """Makes the actual API To call OpenRouter Model"""
+    """Makes the actual API call to OpenRouter."""
 
     if not settings.OPENROUTER_API_KEY:
         raise ValueError(
@@ -126,16 +127,24 @@ async def _call_openrouter(
         response.raise_for_status()
         data = response.json()
     
-    # Extract the response text
-    ai_response = data["choices"][0]["message"]["content"]
+    # Extract the response text safely
+    ai_response = data.get("choices", [{}])[0].get("message", {}).get("content")
 
-    # Log token usage if available
+    # =========================================================================
+    # THE FIX: Check for None BEFORE trying to measure its length
+    # =========================================================================
+    if ai_response is None:
+        logger.warning("OpenRouter returned a null/empty response (likely filtered by upstream LLM safety filters)")
+        return "I'm receiving too many requests right now. Please try again in a moment."
+
+    # Log token usage if available (safe now because we know ai_response is a string)
     if "usage" in data:
         logger.info(
-            f"OpenRouter response received |"
-            f"Tokens: {data['usage'].get('total_tokens', 'N/A')} |"
+            f"OpenRouter response received | "
+            f"Tokens: {data['usage'].get('total_tokens', 'N/A')} | "
             f"Response length: {len(ai_response)} chars"
         )
+        
     return ai_response
 
 
@@ -189,14 +198,13 @@ async def call_mock_agent(
         return response
     
     # Call the actual OpenRouter API
-
     try:
         ai_response = await _call_openrouter(prompt=prompt, context=context)
         return ai_response
     
     except ValueError as e:
         logger.error(f"Configuration error: {e}")
-        return "I'm currently unavailable due to a configuration issue. Please contact support"
+        return "I'm currently unavailable due to a configuration issue. Please contact support."
     
     except httpx.HTTPStatusError as e:
         status_code = e.response.status_code

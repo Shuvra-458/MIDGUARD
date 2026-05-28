@@ -3,234 +3,857 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AEGIS — Gateway SOC | Modern Security Operations</title>
+  <title>AEGIS — Gateway SOC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="soc.css" />
 </head>
 <body>
 
 <!-- ============================================================
-     SIDEBAR — Glassmorphic Navigation
+     SIDEBAR
 ============================================================ -->
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar">
   <div class="sidebar-brand">
     <div class="brand-logo">
-      <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-        <path d="M14 2L3 7v8c0 6.075 4.75 11.75 11 13 6.25-1.25 11-6.925 11-13V7L14 2z" fill="url(#sg)" stroke="rgba(0,210,200,0.4)" stroke-width="0.8"/>
-        <path d="M10 14l3 3 6-6" stroke="#76e4f7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0 0"/>
+      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+        <path d="M14 2L3 7v8c0 6.075 4.75 11.75 11 13 6.25-1.25 11-6.925 11-13V7L14 2z" fill="url(#sg)" stroke="rgba(0,212,200,0.3)" stroke-width="0.5"/>
+        <path d="M10 14l3 3 6-6" stroke="#00d4cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         <defs>
           <linearGradient id="sg" x1="3" y1="2" x2="25" y2="28" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#0d2b2a"/>
-            <stop offset="100%" stop-color="#050b14"/>
+            <stop offset="100%" stop-color="#070f0f"/>
           </linearGradient>
         </defs>
       </svg>
     </div>
     <div class="brand-info">
       <span class="brand-name">AEGIS</span>
-      <span class="brand-sub">Gateway SOC · Zero Trust</span>
+      <span class="brand-sub">Gateway SOC</span>
     </div>
   </div>
 
   <nav class="sidebar-nav">
-    <button class="nav-item active" data-view="dashboard" onclick="navigate('dashboard', this)">
+    <button class="nav-item active" data-view="dashboard">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
       <span>Dashboard</span>
     </button>
-    <button class="nav-item" data-view="simulator" onclick="navigate('simulator', this)">
+    <button class="nav-item" data-view="simulator">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
       <span>Simulator</span>
     </button>
-    <button class="nav-item" data-view="requests" onclick="navigate('requests', this)">
+    <button class="nav-item" data-view="requests">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
       <span>Requests</span>
     </button>
-    <button class="nav-item" data-view="alerts" onclick="navigate('alerts', this)">
+    <button class="nav-item" data-view="alerts">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
       <span>Alerts</span>
       <span class="nav-badge" id="alertBadge" style="display:none">0</span>
     </button>
-    <button class="nav-item" data-view="policies" onclick="navigate('policies', this)">
+    <button class="nav-item" data-view="policies">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
       <span>Policies</span>
     </button>
-    <button class="nav-item" data-view="agents" onclick="navigate('agents', this)">
+    <button class="nav-item" data-view="agents">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/></svg>
       <span>Agents</span>
     </button>
-    <button class="nav-item" data-view="audit" onclick="navigate('audit', this)">
+    <button class="nav-item" data-view="audit">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"/></svg>
       <span>Audit</span>
     </button>
   </nav>
 
   <div class="sidebar-footer">
-    <span class="version-tag">v2.0 · OPS PERIMETER</span>
+    <span class="version-tag">V0.1 · OPS PERIMETER</span>
   </div>
 </aside>
 
 <!-- ============================================================
-     MAIN AREA — Glass Topbar + Views
+     MAIN AREA
 ============================================================ -->
 <div class="main-area">
 
-  <!-- TOP BAR — Modern glass -->
+  <!-- TOP BAR -->
   <header class="topbar">
     <div class="topbar-left">
       <h1 class="page-title" id="pageTitle">Operational Overview</h1>
-      <p class="page-sub" id="pageSub">Live posture across all agent traffic · Zero trust gateway</p>
+      <span class="page-sub" id="pageSub">Live posture across all agent traffic</span>
     </div>
     <div class="topbar-right">
-      <div class="status-pill">
-        <span class="status-dot-pulse"></span>
-        <span id="statusLabel">OPERATIONAL</span>
+      <div class="topbar-status-group">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span id="statusLabel">OPERATIONAL</span>
+        </div>
+        <div class="block-rate-pill">
+          24h block rate <span id="blockRatePill">0.0%</span>
+        </div>
+        <div class="clock" id="clockDisplay"></div>
       </div>
-      <div class="block-rate-pill">
-        24h block rate <span id="blockRatePill">0.0%</span>
-      </div>
-      <div class="clock" id="clockDisplay"></div>
-      <div class="api-config">
-        <input type="text" id="apiKeyInput" placeholder="API Key (msk_v1_...)" class="api-key-field" />
-        <input type="text" id="apiBaseUrl" placeholder="http://localhost:8000" class="api-url-field" value="http://localhost:8000" />
+      <div class="topbar-config">
+        <div class="cfg-group">
+          <span class="cfg-label">API Key</span>
+          <input type="text" id="apiKeyInput" placeholder="msk_v1_..." class="api-key-field" />
+        </div>
+        <div class="cfg-group">
+          <span class="cfg-label">URL</span>
+          <input type="text" id="apiBaseUrl" placeholder="http://localhost:8000" class="api-url-field" value="http://localhost:8000" />
+        </div>
       </div>
     </div>
   </header>
 
   <!-- ============================================================
-       VIEW: DASHBOARD — Enhanced Metrics & Charts
+       VIEW: DASHBOARD
   ============================================================ -->
-  <section class="view active" id="viewDashboard">
+  <div class="view active" id="viewDashboard">
 
-    <!-- Metrics row — glass cards -->
+    <!-- Metrics strip -->
     <div class="metrics-strip">
-      <div class="metric-card m-total"><div class="metric-label">REQUESTS · 24H</div><div class="metric-value" id="mTotal">0</div></div>
-      <div class="metric-card m-block"><div class="metric-label">BLOCKED · 24H</div><div class="metric-value text-red" id="mBlocked">0</div><div class="metric-sub" id="mBlockRate">0.0% rate</div></div>
-      <div class="metric-card m-quar"><div class="metric-label">QUARANTINED</div><div class="metric-value text-orange" id="mQuarantined">0</div></div>
-      <div class="metric-card m-alerts"><div class="metric-label">OPEN ALERTS</div><div class="metric-value text-yellow" id="mAlerts">0</div><div class="metric-sub" id="mAlertsSub">0 critical</div></div>
-      <div class="metric-card"><div class="metric-label">MEAN LATENCY</div><div class="metric-value" id="mLatency">0ms</div></div>
-      <div class="metric-card"><div class="metric-label">P50 LATENCY</div><div class="metric-value" id="mP50">0ms</div></div>
-      <div class="metric-card"><div class="metric-label">P95 LATENCY</div><div class="metric-value" id="mP95">0ms</div></div>
-      <div class="metric-card"><div class="metric-label">RATE LIMITED</div><div class="metric-value" id="mRateLimited">0</div></div>
+      <div class="metric-card m-total">
+        <div class="metric-label">REQUESTS · 24H</div>
+        <div class="metric-value" id="mTotal">0</div>
+      </div>
+      <div class="metric-card m-block">
+        <div class="metric-label">BLOCKED · 24H</div>
+        <div class="metric-value" id="mBlocked">0</div>
+        <div class="metric-sub" id="mBlockRate">0.0% block rate</div>
+      </div>
+      <div class="metric-card m-quar">
+        <div class="metric-label">QUARANTINED</div>
+        <div class="metric-value" id="mQuarantined">0</div>
+      </div>
+      <div class="metric-card m-alerts">
+        <div class="metric-label">OPEN ALERTS</div>
+        <div class="metric-value" id="mAlerts">0</div>
+        <div class="metric-sub" id="mAlertsSub">0 critical</div>
+      </div>
+      <div class="metric-card m-avg">
+        <div class="metric-label">MEAN LATENCY</div>
+        <div class="metric-value" id="mLatency">0ms</div>
+        <div class="metric-sub">across all stages</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">P50 LATENCY</div>
+        <div class="metric-value" id="mP50">0ms</div>
+        <div class="metric-sub">median end-to-end</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">P95 LATENCY</div>
+        <div class="metric-value" id="mP95">0ms</div>
+        <div class="metric-sub">tail performance</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">RATE LIMITED · 24H</div>
+        <div class="metric-value" id="mRateLimited">0</div>
+        <div class="metric-sub">perimeter quiet</div>
+      </div>
     </div>
 
-    <!-- Timeline chart — modern -->
+    <!-- Threat Timeline Chart -->
     <div class="section-card">
-      <div class="card-header"><div><div class="card-title">THREAT TIMELINE · 24H</div><div class="card-title-main">Hourly decisions & threat signals</div></div><button class="card-action-btn" onclick="loadDashboard()">↻ Refresh</button></div>
-      <div class="chart-wrap"><canvas id="timelineChart" height="90"></canvas></div>
+      <div class="card-header">
+        <div class="card-title">
+          <span>📊</span>
+          <span class="card-title-main">Threat Timeline · 24H</span>
+        </div>
+        <div class="card-title" style="font-size: 10px;">Hourly volume of allowed/blocked/quarantined decisions, with total threat signals overlaid.</div>
+        <button class="card-action-btn" onclick="loadDashboard()">Refresh</button>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="timelineChart" height="90"></canvas>
+      </div>
+      <div class="timeline-legend" id="timelineLegend">
+        <div class="legend-item"><span class="legend-color allowed"></span><span>Allowed</span></div>
+        <div class="legend-item"><span class="legend-color blocked"></span><span>Blocked</span></div>
+        <div class="legend-item"><span class="legend-color quarantined"></span><span>Quarantined</span></div>
+        <div class="legend-item"><span class="legend-color threats"></span><span>Threats</span></div>
+      </div>
     </div>
 
-    <!-- Bottom 3-col grid -->
-    <div class="dash-row-3">
-      <div class="section-card"><div class="card-header"><div><div class="card-title">THREAT BREAKDOWN</div><div class="card-title-main">Volume per detector</div></div></div><div id="threatBreakdown" class="breakdown-list"><div class="empty-state">No threats observed — perimeter quiet.</div></div></div>
-      <div class="section-card"><div class="card-header"><div><div class="card-title">TOP NOISY AGENTS</div><div class="card-title-main">Most rule triggers</div></div></div><div id="topAgentsList" class="top-agents-list"><div class="empty-state">No violations in 24h.</div></div></div>
-      <div class="section-card"><div class="card-header"><div><div class="card-title">LATEST ALERTS</div><div class="card-title-main">Recent SOC events</div></div><button class="card-action-btn" onclick="navigate('alerts', document.querySelector('[data-view=alerts]'))">Inbox →</button></div><div id="latestAlertsList" class="alerts-mini-list"><div class="empty-state">No alerts in 24h.</div></div></div>
+    <!-- Three column grid -->
+    <div class="dash-row-2">
+      <!-- Threat Breakdown -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>⚠️</span>
+            <span class="card-title-main">Threat Breakdown</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="section-desc" style="padding: 0 16px 8px;">Volume per detector category.</div>
+          <div id="threatBreakdown" class="breakdown-list">
+            <div class="text-muted" style="padding: 32px; text-align: center;">No threats observed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Noisy Agents -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🤖</span>
+            <span class="card-title-main">Top Noisy Agents</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="section-desc" style="padding: 0 16px 8px;">Agents tripping the most rules.</div>
+          <div id="topAgentsList" class="top-agents-list">
+            <div class="text-muted" style="padding: 32px; text-align: center;">No violations</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Latest Alerts -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🔔</span>
+            <span class="card-title-main">Latest Alerts</span>
+          </div>
+          <button class="card-action-btn" onclick="navigate('alerts')">INBOX →</button>
+        </div>
+        <div class="card-body">
+          <div class="section-desc" style="padding: 0 16px 8px;">Recent SOC events worth a look.</div>
+          <div id="latestAlertsList" class="alerts-mini-list">
+            <div class="text-muted" style="padding: 32px; text-align: center;">No alerts</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Policy Effectiveness + Egress -->
-    <div class="dash-row-2">
-      <div class="section-card"><div class="card-header"><div><div class="card-title">POLICY EFFECTIVENESS</div><div class="card-title-main">Rule hits 24h</div></div></div><div id="policyEffList" class="policy-eff-list"><div class="empty-state">No rule hits.</div></div></div>
-      <div class="section-card"><div class="card-header"><div><div class="card-title">EGRESS DESTINATIONS</div><div class="card-title-main">Allow / Block outbound</div></div></div><div class="chart-wrap-sm"><canvas id="egressChart"></canvas></div></div>
+    <div class="dash-row-3">
+      <!-- Policy Effectiveness -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>📋</span>
+            <span class="card-title-main">Policy Effectiveness</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="section-desc" style="padding: 0 16px 8px;">Hits per active policy rule.</div>
+          <div id="policyEffList" class="policy-effectiveness-list">
+            <div class="text-muted" style="padding: 32px; text-align: center;">No rule hits</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Egress Destinations -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🌐</span>
+            <span class="card-title-main">Egress Destinations</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="section-desc" style="padding: 0 16px 8px;">Outbound traffic grouped by allow / block.</div>
+          <div class="egress-container" id="egressContainer">
+            <div class="text-muted" style="padding: 32px; text-align: center;">No egress data</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- AI Classifier -->
-    <div class="section-card"><div class="card-header"><div><div class="card-title">AI CLASSIFIER · PROTECTAI/DEBERTA-V3-BASE</div><div class="card-title-main">Live prompt classification — injection rate</div></div><span class="badge sev-info">MODEL LIVE</span></div><div class="classifier-grid"><div class="cls-item"><div class="cls-label">INJECTION RATE · 24H</div><div class="cls-value" id="injectionRate">0.0%</div><div class="cls-model" id="injectionSub">0 of 0 classified</div></div><div class="cls-item"><div class="cls-label">ATTACK DISTRIBUTION</div><div class="cls-value" id="topAttackType">—</div><div class="cls-model" id="classifierMsg">Run simulator to generate data</div></div></div></div>
-  </section>
-
-  <!-- ============================================================
-       VIEW: SIMULATOR — Enhanced Pipeline Trace
-  ============================================================ -->
-  <section class="view" id="viewSimulator">
-    <div class="sim-layout">
-      <div class="sim-compose section-card"><div class="card-header"><div><div class="card-title">COMPOSE REQUEST</div><div class="card-title-main">Submit agent action to gateway</div></div><button class="card-action-btn" onclick="loadSimPresets()">Presets</button></div>
-        <div id="simPresetsPanel" class="presets-panel" style="display:none"><div id="simPresetsList"></div></div>
-        <div class="form-group"><label class="form-label">AGENT</label><select class="form-select" id="simAgent"><option value="">Pick an agent</option></select></div>
-        <div class="form-group"><label class="form-label">PROMPT</label><textarea class="form-textarea" id="simPrompt" rows="5" placeholder="The full prompt the agent intends to send…"></textarea></div>
-        <div class="form-row"><div class="form-group"><label class="form-label">INTENDED ACTION</label><input class="form-input" id="simAction" value="respond" /></div><div class="form-group"><label class="form-label">TOOL</label><input class="form-input" id="simTool" placeholder="optional" /></div></div>
-        <div class="form-group"><label class="form-label">TARGET DOMAIN</label><input class="form-input" id="simTargetDomain" placeholder="optional, e.g. analytics.internal" /></div>
-        <div class="form-row"><label class="toggle-label"><input type="checkbox" id="simInjectPii" /><span class="toggle-sw"></span><span>Force PII in response</span></label><label class="toggle-label"><input type="checkbox" id="simInjectHalluc" /><span class="toggle-sw"></span><span>Force hallucination</span></label></div>
-        <button class="btn btn-primary" id="simSendBtn" onclick="runSimulator()"><svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg> Send to Gateway</button>
-        <div class="info-banner" style="margin-top:16px;border-radius:var(--r-lg);"><span>⚡</span><span>Every submission flows through 7 stages — verdict & trace persisted to audit spine.</span></div>
-      </div>
-
-      <div class="sim-trace section-card"><div class="card-header"><div><div class="card-title">PIPELINE TRACE</div><div class="card-title-main">Stage-by-stage execution</div></div></div>
-        <div class="stages-wrap" id="pipelineStages">
-          <div class="stage-row" id="stage-01"><div class="stage-left"><div class="stage-dot" id="dot-01">1</div></div><div class="stage-body"><div class="stage-title">Auth &amp; Identity</div><div class="stage-sub">Verify credentials, role, rate budget</div><div class="stage-detail" id="detail-01"></div></div></div>
-          <div class="stage-row" id="stage-02"><div class="stage-left"><div class="stage-dot" id="dot-02">2</div></div><div class="stage-body"><div class="stage-title">Policy Engine</div><div class="stage-sub">Evaluate every active policy rule</div><div class="stage-detail" id="detail-02"></div></div></div>
-          <div class="stage-row" id="stage-03"><div class="stage-left"><div class="stage-dot" id="dot-03">3</div></div><div class="stage-body"><div class="stage-title">Threat Detection</div><div class="stage-sub">AI: injection, jailbreak, PII, toxicity</div><div class="stage-detail" id="detail-03"></div></div></div>
-          <div class="stage-row" id="stage-04"><div class="stage-left"><div class="stage-dot" id="dot-04">4</div></div><div class="stage-body"><div class="stage-title">Enforcement Layer</div><div class="stage-sub">Combine policy + threat verdicts</div><div class="stage-detail" id="detail-04"></div></div></div>
-          <div class="stage-row" id="stage-05"><div class="stage-left"><div class="stage-dot" id="dot-05">5</div></div><div class="stage-body"><div class="stage-title">Action Execution</div><div class="stage-sub">Sandboxed LLM/tool call</div><div class="stage-detail" id="detail-05"></div></div></div>
-          <div class="stage-row" id="stage-06"><div class="stage-left"><div class="stage-dot" id="dot-06">6</div></div><div class="stage-body"><div class="stage-title">Output Filter</div><div class="stage-sub">Re-scan response for sensitive content</div><div class="stage-detail" id="detail-06"></div></div></div>
-          <div class="stage-row" id="stage-07"><div class="stage-left"><div class="stage-dot" id="dot-07">7</div></div><div class="stage-body"><div class="stage-title">Egress &amp; Network</div><div class="stage-sub">Allow-list check on destinations</div><div class="stage-detail" id="detail-07"></div></div></div>
+    <div class="section-card ai-classifier-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>🧠</span>
+          <span class="card-title-main">AI Classifier · PROTECTAI/DEBERTA-V3-BASE</span>
         </div>
-        <div class="sim-result" id="simResultBox" style="display:none"><div class="sim-result-header" id="simResultHeader"></div><div class="sim-result-body" id="simResultBody"></div></div>
-        <div class="empty-state" id="traceEmpty" style="margin:20px;text-align:center">Send a request to watch the gateway execute end-to-end.</div>
+        <span class="badge sev-info">MODEL LIVE</span>
+      </div>
+      <div class="classifier-grid">
+        <div class="cls-item">
+          <div class="cls-label">INJECTION RATE · 24H</div>
+          <div class="cls-value" id="injectionRate">0%</div>
+          <div class="cls-model" id="injectionSub">0 of 0 requests</div>
+        </div>
+        <div class="cls-item">
+          <div class="cls-label">THREAT EVENTS</div>
+          <div class="cls-value" id="threatEvents">0</div>
+          <div class="cls-model">detected in 24h</div>
+        </div>
+      </div>
+      <div class="card-body" style="padding: 0 16px 16px;">
+        <div class="text-muted" id="classifierMsg">No classified requests yet — run the simulator to generate data.</div>
       </div>
     </div>
-  </section>
+
+  </div><!-- /dashboard -->
+
+  <!-- ============================================================
+       VIEW: SIMULATOR (WITH LLM RESPONSE DISPLAY)
+  ============================================================ -->
+  <div class="view" id="viewSimulator">
+    <div class="sim-layout">
+      
+      <!-- LEFT: Compose Request -->
+      <div class="sim-compose">
+        <div class="section-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>✎</span>
+              <span class="card-title-main">Compose Request</span>
+            </div>
+          </div>
+          <div style="padding: 20px;">
+            <p class="text-muted" style="margin-bottom: 20px; font-size: 12px;">Submit an agent action to the gateway pipeline.</p>
+
+            <!-- Presets -->
+            <div class="form-group">
+              <label class="form-label">Presets</label>
+              <div class="presets-grid">
+                <button class="preset-btn" data-preset="translate">
+                  <span class="preset-tag tag-block">BLOCK</span>
+                  <span>Translate with injection</span>
+                </button>
+                <button class="preset-btn" data-preset="jailbreak">
+                  <span class="preset-tag tag-block">BLOCK</span>
+                  <span>Jailbreak attempt</span>
+                </button>
+                <button class="preset-btn" data-preset="pii">
+                  <span class="preset-tag tag-block">BLOCK</span>
+                  <span>PII leakage</span>
+                </button>
+                <button class="preset-btn" data-preset="safe">
+                  <span class="preset-tag tag-allow">ALLOW</span>
+                  <span>Safe request</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Agent -->
+            <div class="form-group">
+              <label class="form-label">Agent</label>
+              <select class="form-select" id="simAgent">
+                <option value="New MIDGUARD Agent">New MIDGUARD Agent</option>
+                <option value="Test Agent">Test Agent</option>
+              </select>
+            </div>
+
+            <!-- Prompt -->
+            <div class="form-group">
+              <label class="form-label">Prompt</label>
+              <textarea class="form-textarea" id="simPrompt" rows="4" placeholder="The full prompt the agent intends to send..."></textarea>
+            </div>
+
+            <!-- Intended Action & Tool -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Intended Action</label>
+                <select class="form-select" id="simAction">
+                  <option value="query">query (LLM call)</option>
+                  <option value="respond">respond</option>
+                  <option value="tool">tool execution</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tool (optional)</label>
+                <input type="text" class="form-input" id="simTool" placeholder="e.g., read_file">
+              </div>
+            </div>
+
+            <!-- Target Domain -->
+            <div class="form-group">
+              <label class="form-label">Target Domain (optional)</label>
+              <input type="text" class="form-input" id="simDomain" placeholder="e.g., api.openai.com, analytics.internal">
+            </div>
+
+            <!-- Toggles -->
+            <div class="toggle-row">
+              <label class="toggle-label">
+                <input type="checkbox" class="toggle-input" id="forcePII">
+                <span class="toggle-sw"></span>
+                <span>Force PII in response</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" class="toggle-input" id="forceHallucination">
+                <span class="toggle-sw"></span>
+                <span>Force hallucination</span>
+              </label>
+            </div>
+
+            <!-- Send Button -->
+            <button class="btn btn-primary" id="simulateBtn" style="width: 100%; margin-top: 20px; justify-content: center;">
+              Send to Gateway
+            </button>
+
+            <!-- How It Works -->
+            <div class="how-it-works" style="margin-top: 20px;">
+              <div class="how-it-works-title">⚡ How It Works</div>
+              <div class="how-it-works-text">
+                Every submission flows through seven sequential stages: identity, policy match, 
+                threat detection, enforcement, sandboxed execution, output filtering, and egress 
+                allow-list. Any stage can quarantine or block — the verdict and full trace are 
+                persisted to the audit spine.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Pipeline Trace + LLM Response -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Pipeline Trace Card -->
+        <div class="pipeline-trace section-card">
+          <div class="trace-header">
+            <div class="card-title">
+              <span>📋</span>
+              <span class="card-title-main">Pipeline Trace</span>
+            </div>
+            <div class="trace-status-badge" id="traceStatus">Ready</div>
+          </div>
+
+          <div class="stages-wrap" id="stagesWrap">
+            <!-- Stage 01 -->
+            <div class="stage-row" data-stage="1">
+              <div class="stage-left">
+                <div class="stage-dot" id="stage1Dot">01</div>
+              </div>
+              <div class="stage-body">
+                <div class="stage-title">Auth & Identity</div>
+                <div class="stage-sub">Verify agent credentials, role, and rate budget</div>
+                <div class="stage-detail" id="stage1Detail"></div>
+              </div>
+            </div>
+            
+            <!-- Stage 02 -->
+            <div class="stage-row" data-stage="2">
+              <div class="stage-left">
+                <div class="stage-dot" id="stage2Dot">02</div>
+              </div>
+              <div class="stage-body">
+                <div class="stage-title">Policy Engine</div>
+                <div class="stage-sub">Evaluate every active policy rule against the payload</div>
+                <div class="stage-detail" id="stage2Detail"></div>
+              </div>
+            </div>
+            <!-- Stage 03 -->
+            <div class="stage-row" data-stage="3">
+              <div class="stage-left">
+                <div class="stage-dot" id="stage3Dot">03</div>
+              </div>
+              <div class="stage-body">
+                <div class="stage-title">Threat Detection</div>
+                <div class="stage-sub">AI scanners for injection, jailbreak, PII, leakage, toxicity</div>
+                <div class="stage-detail" id="stage3Detail"></div>
+              </div>
+            </div>
+            <!-- Stage 04 -->
+            <div class="stage-row" data-stage="4">
+              <div class="stage-left">
+                <div class="stage-dot" id="stage4Dot">04</div>
+              </div>
+              <div class="stage-body">
+                <div class="stage-title">Enforcement Layer</div>
+                <div class="stage-sub">Combine policy + threat verdicts into a single decision</div>
+                <div class="stage-detail" id="stage4Detail"></div>
+              </div>
+            </div>
+            <!-- Stage 05 -->
+            <div class="stage-row" data-stage="5">
+              <div class="stage-left">
+                <div class="stage-dot" id="stage5Dot">05</div>
+              </div>
+              <div class="stage-body">
+                <div class="stage-title">Action Execution</div>
+                <div class="stage-sub">Sandboxed execution of the requested tool / LLM call</div>
+                <div class="stage-detail" id="stage5Detail"></div>
+              </div>
+            </div>
+            <!-- Stage 06 -->
+            <div class="stage-row" data-stage="6">
+              <div class="stage-left">
+                <div class="stage-dot" id="stage6Dot">06</div>
+              </div>
+              <div class="stage-body">
+                <div class="stage-title">Output Filter</div>
+                <div class="stage-sub">Re-scan the response for sensitive content before return</div>
+                <div class="stage-detail" id="stage6Detail"></div>
+              </div>
+            </div>
+            <!-- Stage 07 -->
+            <div class="stage-row" data-stage="7">
+              <div class="stage-left">
+                <div class="stage-dot" id="stage7Dot">07</div>
+              </div>
+              <div class="stage-body">
+                <div class="stage-title">Egress & Network</div>
+                <div class="stage-sub">Allow-list check on outbound destinations</div>
+                <div class="stage-detail" id="stage7Detail"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Result Box -->
+          <div class="sim-result" id="simResult" style="display: none;">
+            <div class="sim-result-header" id="simResultHeader">
+              <span>✓</span>
+              <span id="simResultTitle">Decision</span>
+            </div>
+            <div class="sim-result-body" id="simResultBody">
+              Result will appear here...
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW: LLM Response Display Card -->
+        <div class="section-card" id="llmResponseCard" style="display: none;">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🤖</span>
+              <span class="card-title-main">LLM Response</span>
+            </div>
+            <button class="card-action-btn" onclick="copyResponse()">Copy Response</button>
+          </div>
+          <div class="llm-response-content" style="padding: 20px;">
+            <div class="response-text" id="responseText" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word;"></div>
+            <div class="response-meta" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; gap: 20px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap;">
+              <span>📊 Tokens: <span id="responseTokens">—</span></span>
+              <span>⏱️ Generation time: <span id="responseTime">—</span>ms</span>
+              <span>🔍 Safety filter: <span id="safetyFilter">—</span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /simulator -->
 
   <!-- ============================================================
        VIEW: REQUESTS
   ============================================================ -->
-  <section class="view" id="viewRequests">
-    <div class="section-card"><div class="card-header"><div><div class="card-title">REQUEST STREAM</div><div class="card-title-main">Every decision the gateway has made</div></div><button class="card-action-btn" onclick="loadRequests()">↻ Refresh</button></div>
-      <div class="filter-bar"><span class="filter-label">FILTERS</span><div class="filter-count" id="reqCount">0 of 0</div><select class="form-select" id="reqFilterDecision" onchange="loadRequests()"><option value="all">All decisions</option><option value="ALLOW">Allowed</option><option value="BLOCK">Blocked</option><option value="QUARANTINE">Quarantined</option></select><select class="form-select" id="reqFilterAgent" onchange="loadRequests()"><option value="all">All agents</option></select></div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>TIME</th><th>AGENT</th><th>PROMPT</th><th>ACTION</th><th>DECISION</th><th>AI CLASS.</th><th>THREATS</th><th>LATENCY</th></tr></thead><tbody id="requestsTableBody"><tr><td colspan="8" class="table-empty">Loading requests...</td></tr></tbody></table></div>
-      <div class="pagination"><div class="page-info"><span id="reqPageInfo">Page 1</span></div><div class="page-btns"><button class="page-btn" id="reqPrevBtn" onclick="reqChangePage(-1)" disabled>←</button><button class="page-btn" id="reqNextBtn" onclick="reqChangePage(1)">→</button></div></div>
+  <div class="view" id="viewRequests">
+    <div class="section-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>📨</span>
+          <span class="card-title-main">Request Stream</span>
+        </div>
+        <button class="card-action-btn" onclick="loadRequests()">Refresh</button>
+      </div>
+
+      <div class="filter-bar">
+        <span class="text-muted" style="font-size: 11px; font-weight: 600;">FILTERS</span>
+        <select class="form-select" id="reqFilterDecision" onchange="loadRequests()" style="width: 140px;">
+          <option value="all">All decisions</option>
+          <option value="ALLOW">Allowed</option>
+          <option value="BLOCK">Blocked</option>
+          <option value="QUARANTINE">Quarantined</option>
+        </select>
+        <select class="form-select" id="reqFilterAgent" onchange="loadRequests()" style="width: 160px;">
+          <option value="all">All agents</option>
+        </select>
+        <span class="filter-count" id="reqCount">0 OF 0</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>TIME</th><th>AGENT</th><th>PROMPT</th><th>ACTION</th><th>DECISION</th><th>AI CLASS.</th><th>THREATS</th><th>LATENCY</th></tr>
+          </thead>
+          <tbody id="requestsTableBody">
+            <tr><td colspan="8" class="table-empty">Loading requests...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="page-info" id="reqPageInfo">Page 1</div>
+        <div class="page-btns">
+          <button class="page-btn" id="reqPrevBtn" onclick="reqChangePage(-1)">←</button>
+          <button class="page-btn" id="reqNextBtn" onclick="reqChangePage(1)">→</button>
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
 
   <!-- ============================================================
        VIEW: ALERTS
   ============================================================ -->
-  <section class="view" id="viewAlerts">
-    <div class="section-card"><div class="card-header"><div><div class="card-title">ALERTS INBOX</div><div class="card-title-main">Security events requiring attention</div></div><button class="card-action-btn" onclick="loadAlerts()">↻ Refresh</button></div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>TIME</th><th>TITLE</th><th>AGENT</th><th>SEVERITY</th><th>DECISION</th><th>REASON</th></tr></thead><tbody id="alertsTableBody"><tr><td colspan="6" class="table-empty">Loading alerts...</td></tr></tbody></table></div>
+  <div class="view" id="viewAlerts">
+    <div class="section-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>🚨</span>
+          <span class="card-title-main">Alerts Inbox</span>
+        </div>
+        <button class="card-action-btn" onclick="loadAlerts()">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table alerts-table">
+          <thead>
+            <tr><th>TIME</th><th>TITLE</th><th>AGENT</th><th>SEVERITY</th><th>DECISION</th><th>REASON</th></tr>
+          </thead>
+          <tbody id="alertsTableBody">
+            <tr><td colspan="6" class="table-empty">Loading alerts...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </section>
+  </div>
 
   <!-- ============================================================
        VIEW: POLICIES
   ============================================================ -->
-  <section class="view" id="viewPolicies">
-    <div class="section-card"><div class="card-header"><div><div class="card-title">POLICY RULES</div><div class="card-title-main">Active security policies evaluated on every request</div></div><div class="hstack gap-8"><select class="form-select" id="policyTypeFilter" onchange="filterPolicies()"><option value="all">All types</option><option value="input">Input</option><option value="action">Action</option><option value="network_allow">Network Allow</option><option value="network_block">Network Block</option></select><button class="btn btn-primary btn-sm" onclick="openAddPolicyModal()">+ Add Rule</button><button class="btn btn-ghost btn-sm" onclick="loadPolicies()">Refresh</button></div></div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>NAME</th><th>TYPE</th><th>PATTERN</th><th>MATCH</th><th>SEVERITY</th><th>HITS 24H</th><th>STATUS</th></tr></thead><tbody id="policiesTableBody"><tr><td colspan="7" class="table-empty">Loading policies...</td></tr></tbody></table></div>
+  <div class="view" id="viewPolicies">
+    <div class="section-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>📜</span>
+          <span class="card-title-main">Policy Rules</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <select class="form-select" id="policyTypeFilter" onchange="filterPolicies()" style="width: 130px;">
+            <option value="all">All types</option>
+            <option value="input">Input</option>
+            <option value="action">Action</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="openAddPolicyModal()">+ Add Rule</button>
+          <button class="card-action-btn" onclick="loadPolicies()">Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>NAME</th><th>TYPE</th><th>PATTERN</th><th>MATCH</th><th>SEVERITY</th><th>HITS 24H</th><th>STATUS</th></tr>
+          </thead>
+          <tbody id="policiesTableBody">
+            <tr><td colspan="7" class="table-empty">Loading policies...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </section>
+  </div>
 
   <!-- ============================================================
        VIEW: AGENTS
   ============================================================ -->
-  <section class="view" id="viewAgents">
-    <div class="section-card"><div class="card-header"><div><div class="card-title">AGENT REGISTRY</div><div class="card-title-main">Registered AI agents and access configuration</div></div><div class="hstack gap-8"><button class="btn btn-primary btn-sm" onclick="openAddAgentModal()">+ Register Agent</button><button class="btn btn-ghost btn-sm" onclick="loadAgents()">Refresh</button></div></div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>NAME</th><th>ROLE</th><th>STATUS</th><th>RATE LIMIT</th><th>POLICY TIER</th><th>LAST SEEN</th><th>ACTIONS</th></tr></thead><tbody id="agentsTableBody"><tr><td colspan="7" class="table-empty">Loading agents...</td></tr></tbody></table></div>
+  <div class="view" id="viewAgents">
+    <div class="section-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>👥</span>
+          <span class="card-title-main">Agent Registry</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary btn-sm" onclick="openAddAgentModal()">+ Register Agent</button>
+          <button class="card-action-btn" onclick="loadAgents()">Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>NAME</th><th>ROLE</th><th>STATUS</th><th>RATE LIMIT</th><th>POLICY TIER</th><th>LAST SEEN</th><th>ACTIONS</th></tr>
+          </thead>
+          <tbody id="agentsTableBody">
+            <tr><td colspan="7" class="table-empty">Loading agents...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </section>
+  </div>
 
   <!-- ============================================================
        VIEW: AUDIT
   ============================================================ -->
-  <section class="view" id="viewAudit">
-    <div class="section-card"><div class="card-header"><div><div class="card-title">AUDIT LOG</div><div class="card-title-main">Complete immutable record of every decision</div></div><div class="hstack gap-8"><select class="form-select" id="auditFilterDecision" onchange="loadAudit()"><option value="all">All decisions</option><option value="ALLOW">Allowed</option><option value="BLOCK">Blocked</option><option value="QUARANTINE">Quarantined</option></select><select class="form-select" id="auditFilterAgent" onchange="loadAudit()"><option value="all">All agents</option></select><button class="btn btn-ghost btn-sm" onclick="loadAudit()">Refresh</button></div></div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>TIME</th><th>REQUEST ID</th><th>AGENT</th><th>PROMPT</th><th>ACTION</th><th>DECISION</th><th>THREAT SCORE</th><th>LAYER</th><th>RULE</th></tr></thead><tbody id="auditTableBody"><tr><td colspan="9" class="table-empty">Loading audit log...</td></tr></tbody></table></div>
-      <div class="pagination"><div class="page-info"><span id="auditPageInfo">Page 1</span></div><div class="page-btns"><button class="page-btn" id="auditPrevBtn" onclick="auditChangePage(-1)" disabled>←</button><button class="page-btn" id="auditNextBtn" onclick="auditChangePage(1)">→</button></div></div>
+  <div class="view" id="viewAudit">
+    <div class="section-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>📝</span>
+          <span class="card-title-main">Audit Log</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <select class="form-select" id="auditFilterDecision" onchange="loadAudit()" style="width: 130px;">
+            <option value="all">All decisions</option>
+            <option value="ALLOW">Allowed</option>
+            <option value="BLOCK">Blocked</option>
+          </select>
+          <select class="form-select" id="auditFilterAgent" onchange="loadAudit()" style="width: 150px;">
+            <option value="all">All agents</option>
+          </select>
+          <button class="card-action-btn" onclick="loadAudit()">Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>TIME</th><th>REQUEST ID</th><th>AGENT</th><th>PROMPT</th><th>ACTION</th><th>DECISION</th><th>THREAT SCORE</th><th>LAYER</th></tr>
+          </thead>
+          <tbody id="auditTableBody">
+            <tr><td colspan="8" class="table-empty">Loading audit log......</tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div class="page-info" id="auditPageInfo">Page 1</div>
+        <div class="page-btns">
+          <button class="page-btn" id="auditPrevBtn" onclick="auditChangePage(-1)">←</button>
+          <button class="page-btn" id="auditNextBtn" onclick="auditChangePage(1)">→</button>
+        </div>
+      </div>
     </div>
-  </section>
-</div>
+  </div>
+
+</div><!-- /main-area -->
 
 <!-- ============================================================
-     MODALS — Glassmorphic
+     MODALS
 ============================================================ -->
-<div class="modal-overlay" id="addAgentModal" onclick="closeModal('addAgentModal')"><div class="modal" onclick="event.stopPropagation()"><div class="modal-header"><h2 class="modal-title">Register New Agent</h2><button class="modal-close" onclick="closeModal('addAgentModal')">&times;</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Agent Name *</label><input class="form-input" id="newAgentName" placeholder="e.g. Customer Service Bot v2" /></div><div class="form-group"><label class="form-label">Description</label><input class="form-input" id="newAgentDesc" placeholder="Optional description" /></div><div class="form-row"><div class="form-group"><label class="form-label">Role</label><select class="form-select" id="newAgentRole"><option value="standard">standard</option><option value="admin">admin</option></select></div><div class="form-group"><label class="form-label">Rate Limit (req/min)</label><input type="number" class="form-input" id="newAgentRateLimit" value="30" min="1" max="1000" /></div></div><div class="form-group"><label class="form-label">Policy Tier</label><select class="form-select" id="newAgentTier"><option value="standard">standard</option><option value="strict">strict</option><option value="permissive">permissive</option></select></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addAgentModal')">Cancel</button><button class="btn btn-primary" onclick="createAgent()">Register Agent</button></div></div></div>
 
-<div class="modal-overlay" id="apiKeyModal" onclick="closeModal('apiKeyModal')"><div class="modal" onclick="event.stopPropagation()"><div class="modal-header"><h2 class="modal-title">Agent Created — Save Your API Key</h2><button class="modal-close" onclick="closeModal('apiKeyModal')">&times;</button></div><div class="modal-body"><div class="api-key-warning">⚠️ This key will NOT be shown again. Copy it now.</div><div class="api-key-display-box"><div class="key-text" id="newApiKeyDisplay">—</div></div><button class="copy-key-btn" onclick="copyApiKey()">📋 Copy to Clipboard</button></div></div></div>
+<!-- Add Agent Modal -->
+<div class="modal-overlay" id="addAgentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Register New Agent</h2>
+      <button class="modal-close" onclick="closeModal('addAgentModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Agent Name *</label>
+        <input class="form-input" id="newAgentName" placeholder="e.g. Customer Service Bot v2" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-select" id="newAgentRole">
+            <option value="standard">standard</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rate Limit (req/min)</label>
+          <input type="number" class="form-input" id="newAgentRateLimit" value="30" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addAgentModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createAgent()">Register Agent</button>
+    </div>
+  </div>
+</div>
 
-<div class="modal-overlay" id="editAgentModal" onclick="closeModal('editAgentModal')"><div class="modal" onclick="event.stopPropagation()"><div class="modal-header"><h2 class="modal-title">Edit Agent</h2><button class="modal-close" onclick="closeModal('editAgentModal')">&times;</button></div><div class="modal-body"><input type="hidden" id="editAgentId" /><div class="form-group"><label class="form-label">Agent Name</label><input class="form-input" id="editAgentName" /></div><div class="form-row"><div class="form-group"><label class="form-label">Status</label><select class="form-select" id="editAgentStatus"><option value="active">active</option><option value="suspended">suspended</option><option value="blocked">blocked</option></select></div><div class="form-group"><label class="form-label">Rate Limit (req/min)</label><input type="number" class="form-input" id="editAgentRateLimit" /></div></div><div class="form-row"><div class="form-group"><label class="form-label">Role</label><select class="form-select" id="editAgentRole"><option value="standard">standard</option><option value="admin">admin</option></select></div><div class="form-group"><label class="form-label">Policy Tier</label><select class="form-select" id="editAgentPolicyTier"><option value="standard">standard</option><option value="strict">strict</option><option value="permissive">permissive</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('editAgentModal')">Cancel</button><button class="btn btn-primary" onclick="saveAgentEdits()">Save Changes</button></div></div></div>
+<!-- API Key Modal -->
+<div class="modal-overlay" id="apiKeyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Agent Created — Save Your API Key</h2>
+      <button class="modal-close" onclick="closeModal('apiKeyModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="api-key-warning">⚠️ This key will NOT be shown again. Copy it now.</div>
+      <div class="api-key-display-box">
+        <div class="key-text" id="newApiKeyDisplay">—</div>
+      </div>
+      <button class="copy-key-btn" onclick="copyApiKey()">📋 Copy to Clipboard</button>
+    </div>
+  </div>
+</div>
 
-<div class="modal-overlay" id="addPolicyModal" onclick="closeModal('addPolicyModal')"><div class="modal" onclick="event.stopPropagation()"><div class="modal-header"><h2 class="modal-title">Add Policy Rule</h2><button class="modal-close" onclick="closeModal('addPolicyModal')">&times;</button></div><div class="modal-body"><div class="policy-info-banner">📋 Policy rules are stored in <code>config/policy_rules.yaml</code>. This form shows how a rule would look — contact your admin to persist new rules.</div><div class="form-group"><label class="form-label">Rule Name *</label><input class="form-input" id="newPolicyName" placeholder="e.g. block_ssn_in_prompt" /></div><div class="form-row"><div class="form-group"><label class="form-label">Rule Type</label><select class="form-select" id="newPolicyType"><option value="input">Input (prompt)</option><option value="action">Action</option><option value="network_allow">Network Allow</option><option value="network_block">Network Block</option></select></div><div class="form-group"><label class="form-label">Match Type</label><select class="form-select" id="newPolicyMatch"><option value="contains">contains</option><option value="exact">exact</option><option value="startswith">startswith</option><option value="endswith">endswith</option><option value="regex">regex</option></select></div></div><div class="form-group"><label class="form-label">Pattern *</label><input class="form-input" id="newPolicyPattern" placeholder="The pattern to match against" /></div><div class="form-group"><label class="form-label">Reason</label><input class="form-input" id="newPolicyReason" placeholder="Human-readable block reason" /></div><div class="form-group"><label class="form-label">Severity</label><select class="form-select" id="newPolicySeverity"><option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="critical">critical</option></select></div><div class="form-label">YAML Preview</div><pre class="yaml-preview" id="policyYamlPreview"></pre></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addPolicyModal')">Cancel</button><button class="btn btn-primary" onclick="previewPolicy()">Preview YAML</button></div></div></div>
+<!-- Edit Agent Modal -->
+<div class="modal-overlay" id="editAgentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Edit Agent</h2>
+      <button class="modal-close" onclick="closeModal('editAgentModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editAgentId" />
+      <div class="form-group">
+        <label class="form-label">Agent Name</label>
+        <input class="form-input" id="editAgentName" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="editAgentStatus">
+            <option value="active">active</option>
+            <option value="suspended">suspended</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rate Limit</label>
+          <input type="number" class="form-input" id="editAgentRateLimit" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editAgentModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAgentEdits()">Save Changes</button>
+    </div>
+  </div>
+</div>
 
+<!-- Add Policy Modal -->
+<div class="modal-overlay" id="addPolicyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Add Policy Rule</h2>
+      <button class="modal-close" onclick="closeModal('addPolicyModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="policy-info-banner">
+        <span>ℹ️</span>
+        <span>Policy rules are stored in <code>config/policy_rules.yaml</code>. Contact your admin to persist new rules.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rule Name *</label>
+        <input class="form-input" id="newPolicyName" placeholder="e.g. block_ssn_in_prompt" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rule Type</label>
+          <select class="form-select" id="newPolicyType">
+            <option value="input">Input (prompt)</option>
+            <option value="action">Action</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Match Type</label>
+          <select class="form-select" id="newPolicyMatch">
+            <option value="contains">contains</option>
+            <option value="regex">regex</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pattern *</label>
+        <input class="form-input" id="newPolicyPattern" placeholder="The pattern to match against" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Severity</label>
+        <select class="form-select" id="newPolicySeverity">
+          <option value="low">low</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+          <option value="critical">critical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">YAML Preview</label>
+        <pre class="yaml-preview" id="policyYamlPreview"></pre>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addPolicyModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="previewPolicy()">Preview YAML</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="soc.js"></script>

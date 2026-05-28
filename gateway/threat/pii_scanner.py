@@ -254,22 +254,42 @@ async def scan_for_pii(prompt: str) -> dict:
             logger.debug("PII Intent detected: User asking LLM to extract sensitive data")
 
     # ── SPACY NER SCANNING ────────────────────────────────────────────────────
+    # ── SPACY NER SCANNING ────────────────────────────────────────────────────
     nlp = _get_nlp()
     if nlp is not None:
         try:
             doc = nlp(prompt)
             for ent in doc.ents:
-                # Only flag PERSON names in contexts that suggest identity sharing
                 if ent.label_ == "PERSON" and _is_sensitive_person_context(prompt, ent.text):
                     if "PERSON_NAME" not in found_pii:
                         found_pii.append("PERSON_NAME")
-                        max_score = max(max_score, 0.60)
+                        
+                        # --- DYNAMIC SCORE CALCULATION ---
+                        base_score = 0.60
+                        
+                        # Boost 1: Financial/Banking context (+0.15)
+                        financial_keywords = ["account", "bank", "balance", "loan", "credit card", "transaction"]
+                        if any(kw in prompt.lower() for kw in financial_keywords):
+                            base_score += 0.15
+                            
+                        # Boost 2: Clustered PII (+0.15) 
+                        # If name AND date are in the same prompt, it's identity theft
+                        if "DATE" in [e.label_ for e in doc.ents]:
+                            base_score += 0.15
+                            
+                        # Boost 3: Multiple people mentioned (+0.05)
+                        person_count = sum(1 for e in doc.ents if e.label_ == "PERSON")
+                        if person_count > 1:
+                            base_score += 0.05
+                            
+                        # Cap at 0.95 to leave room for critical IDs like Aadhaar (0.92)
+                        dynamic_score = min(base_score, 0.95)
+                        
+                        max_score = max(max_score, dynamic_score)
+                        logger.debug(f"Dynamic PII Score for {ent.text}: {dynamic_score:.2f}")
 
         except Exception as e:
             logger.warning(f"spaCy NER scan error: {e}")
-
-    if found_pii:
-        logger.info(f"PII detected: {found_pii} | Score: {max_score:.2f}")
 
     return {
         "score":     max_score,

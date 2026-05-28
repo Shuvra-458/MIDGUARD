@@ -65,6 +65,8 @@ from gateway.redis_client import get_redis, init_redis, close_redis
 from config.settings import settings
 from gateway.threat.emotion_detector import scan_emotion_cvv
 from gateway.soc.routes import router as soc_router
+from gateway.auth.login import router as auth_router
+from gateway.threat.emotion_detector import preload_deberta_model
 import time  # To calculate how fast DeBERTa is
 # =============================================================================
 #  LOGGING SETUP
@@ -114,6 +116,9 @@ async def lifespan(app: FastAPI):
     logger.info("Loading policy rules...")
     load_policy_rules()
     logger.info("✓ Policy rules loaded")
+
+    logger.info("Pre-loading local ML models (DeBERTa + SpaCy)...")
+    preload_deberta_model()
 
     logger.info(f"Environment : {settings.ENVIRONMENT}")
     logger.info(f"Gateway     : http://0.0.0.0:{settings.PORT}")
