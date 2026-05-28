@@ -211,6 +211,350 @@ Scans AI responses for:
 * Railway
 
 ---
+# 🔧 Prerequisites
+
+Before running MIDGUARD, ensure the following software and tools are installed on your system.
+
+---
+
+# 🖥️ System Requirements
+
+Recommended:
+
+* OS: Ubuntu 22.04+ / Linux / macOS / Windows (WSL2 recommended)
+* RAM: Minimum 8 GB
+* Storage: Minimum 10 GB free
+* CPU: Multi-core processor recommended
+* Internet connection for downloading AI models and Docker images
+
+---
+
+# 📦 Required Software
+
+## 1️⃣ Python 3.11+
+
+MIDGUARD is built using Python 3.11.
+
+### Verify Installation
+
+```bash id="xq0h3j"
+python3 --version
+```
+
+### Download Python
+
+* Linux/macOS/Windows:
+  https://www.python.org/downloads/
+
+---
+
+## 2️⃣ Docker
+
+Docker is required to run:
+
+* FastAPI backend
+* PostgreSQL
+* Redis
+* Monitoring services
+
+### Verify Installation
+
+```bash id="j0u8d1"
+docker --version
+```
+
+### Install Docker
+
+* Official Installation Guide:
+  https://docs.docker.com/get-docker/
+
+### Ubuntu Quick Install
+
+```bash id="b9e2ms"
+sudo apt update
+sudo apt install docker.io -y
+sudo systemctl enable docker
+sudo systemctl start docker
+```
+
+---
+
+## 3️⃣ Docker Compose
+
+Used for multi-container orchestration.
+
+### Verify Installation
+
+```bash id="h7t9pl"
+docker-compose --version
+```
+
+### Install Docker Compose
+
+* Official Docs:
+  https://docs.docker.com/compose/install/
+
+### Ubuntu Quick Install
+
+```bash id="0v8x6f"
+sudo apt install docker-compose -y
+```
+
+---
+
+## 4️⃣ Make Utility
+
+Required for running Makefile commands.
+
+### Verify Installation
+
+```bash id="vm1yaf"
+make --version
+```
+
+### Install Make
+
+### Ubuntu/Debian
+
+```bash id="mlpl8m"
+sudo apt install make -y
+```
+
+### macOS
+
+```bash id="vyd6oz"
+xcode-select --install
+```
+
+---
+
+# 🧠 AI/ML Dependencies
+
+The following models/libraries are automatically downloaded during setup or first execution.
+
+## DistilBERT
+
+Used for:
+
+* Prompt injection detection
+* Semantic analysis
+
+### HuggingFace
+
+https://huggingface.co/
+
+---
+
+## spaCy NLP Model
+
+Used for:
+
+* PII detection
+* Named Entity Recognition
+
+### Install Manually (Optional)
+
+```bash id="k9c0gc"
+python -m spacy download en_core_web_sm
+```
+
+### spaCy Official Website
+
+https://spacy.io/
+
+---
+
+# 🗄️ Database & Cache
+
+These are automatically started via Docker Compose.
+
+## PostgreSQL 15
+
+Used for:
+
+* Audit logs
+* Agent authentication
+* Persistent storage
+
+Official Website:
+https://www.postgresql.org/
+
+---
+
+## Redis 7
+
+Used for:
+
+* Rate limiting
+* Token bucket implementation
+* Temporary caching
+
+Official Website:
+https://redis.io/
+
+---
+
+# ☁️ Groq API Access
+
+MIDGUARD integrates with Groq-hosted Llama 3.1 8B.
+
+## Create Free Groq API Key
+
+1. Visit:
+   https://console.groq.com/
+
+2. Sign up/Login
+
+3. Generate API key
+
+4. Add it inside `.env`
+
+Example:
+
+```env id="k8mn1r"
+GROQ_API_KEY=your_api_key_here
+```
+
+---
+
+# 🧪 Optional Development Tools
+
+## Postman
+
+Used for:
+
+* API testing
+* Attack simulation
+* Request debugging
+
+Download:
+https://www.postman.com/downloads/
+
+---
+
+## Git
+
+### Verify Installation
+
+```bash id="6hrl4p"
+git --version
+```
+
+### Install Git
+
+https://git-scm.com/downloads
+
+---
+
+# 📥 Clone the Repository
+
+```bash id="b1fdh9"
+git clone https://github.com/your-username/MIDGUARD.git
+cd MIDGUARD
+```
+
+---
+
+# 📄 Install Python Dependencies (Optional Local Setup)
+
+If running locally without Docker:
+
+```bash id="yo4rde"
+pip install -r requirements.txt
+```
+
+---
+
+# ⚡ Quick Start (Recommended)
+
+## Start MIDGUARD
+
+```bash id="xf8p4o"
+make start
+```
+
+## Access Backend
+
+```text id="4smwln"
+http://localhost:8000
+```
+
+## Access SOC Dashboard
+
+```text id="dxl1cx"
+http://localhost:8000/soc
+```
+
+## Access Metrics
+
+```text id="zq0j4g"
+http://localhost:8000/metrics
+```
+
+---
+
+# 🛑 Common Issues
+
+## Docker Permission Denied
+
+Run:
+
+```bash id="2j6tdn"
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+---
+
+## Port Already in Use
+
+Check ports:
+
+```bash id="br4h6k"
+sudo lsof -i :8000
+```
+
+Kill process if needed:
+
+```bash id="i0q0w7"
+sudo kill -9 <PID>
+```
+
+---
+
+# ✅ Recommended Startup Flow
+
+```bash id="13h59g"
+# Clone repo
+git clone https://github.com/your-username/MIDGUARD.git
+
+# Enter project
+cd MIDGUARD
+
+# Create environment variables
+touch .env
+
+# Start application
+make rebuild
+
+# Check logs
+make logs
+```
+
+---
+
+# 🎯 Ready to Use
+
+Once the containers are running successfully:
+
+* Backend API becomes available
+* SOC dashboard becomes live
+* Threat detection pipeline activates
+* Redis/PostgreSQL services connect automatically
+* Metrics endpoint becomes accessible
+
+MIDGUARD is now ready to defend AI applications against prompt injections, jailbreaks, PII leaks, and toxic outputs.
+
 
 # ⚙️ Installation & Setup
 
