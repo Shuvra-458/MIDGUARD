@@ -559,8 +559,41 @@ async function finalize(requestId, agent, prompt, decision, reason, threatScore,
     $('submitBtn').disabled = false;
 }
 
+// ── Theme Toggle ──────────────────────────────────────────────────
+function initTheme() {
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = themeToggle?.querySelector('.sun-icon');
+    const moonIcon = themeToggle?.querySelector('.moon-icon');
+
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('midguard-theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        if (sunIcon) sunIcon.style.display = 'none';
+        if (moonIcon) moonIcon.style.display = 'block';
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('midguard-theme', isLight ? 'light' : 'dark');
+            
+            if (isLight) {
+                if (sunIcon) sunIcon.style.display = 'none';
+                if (moonIcon) moonIcon.style.display = 'block';
+            } else {
+                if (sunIcon) sunIcon.style.display = 'block';
+                if (moonIcon) moonIcon.style.display = 'none';
+            }
+        });
+    }
+}
+
 // ── Init ──────────────────────────────────────────────────────────
 function init() {
+    // Initialize theme toggle
+    initTheme();
+
     // Build preset grid
     const grid = $('presetGrid');
     PRESETS.forEach(p => {

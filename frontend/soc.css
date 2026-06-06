@@ -213,6 +213,48 @@ body::before {
 }
 
 /* ================================================================
+   THEME TOGGLE BUTTON
+   ================================================================ */
+
+.theme-toggle-container {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--border-glow);
+  color: var(--accent);
+}
+
+.theme-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.theme-toggle-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ================================================================
    MAIN & TOPBAR
    ================================================================ */
 
@@ -1459,9 +1501,10 @@ body::before {
 
 @media (max-width: 1100px) {
   :root { --sidebar-w: 70px; }
-  .brand-info, .sidebar-footer, .nav-item span:not(.nav-badge) { display: none; }
+  .brand-info, .sidebar-footer, .nav-item span:not(.nav-badge), .theme-toggle-text { display: none; }
   .nav-item { justify-content: center; padding: 12px; }
   .sidebar-brand { justify-content: center; }
+  .theme-toggle-btn { justify-content: center; padding: 10px; }
   .sim-layout { grid-template-columns: 1fr; }
 }
 
@@ -1590,4 +1633,211 @@ body::before {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ================================================================
+   LIGHT THEME
+   ================================================================ */
+
+body.light-theme {
+  /* Core Colors */
+  --bg-void:       #f8fafc;
+  --bg-base:       #f1f5f9;
+  --bg-surface:    #ffffff;
+  --bg-card:       #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-input:      #f1f5f9;
+  --bg-elevated:   #ffffff;
+
+  /* Borders */
+  --border:        rgba(148, 163, 184, 0.35);
+  --border-light:  rgba(148, 163, 184, 0.2);
+  --border-glow:   rgba(0, 180, 170, 0.3);
+
+  /* Accent */
+  --accent:       #0d9488;
+  --accent-dim:   rgba(13, 148, 136, 0.08);
+  --accent-glow:  rgba(13, 148, 136, 0.15);
+
+  /* Status */
+  --success:      #059669;
+  --success-dim:  rgba(5, 150, 105, 0.08);
+  --danger:       #dc2626;
+  --danger-dim:   rgba(220, 38, 38, 0.08);
+  --warning:      #d97706;
+  --warning-dim:  rgba(217, 119, 6, 0.08);
+  --info:         #2563eb;
+  --info-dim:     rgba(37, 99, 235, 0.08);
+  --purple:       #7c3aed;
+  --purple-dim:   rgba(124, 58, 237, 0.08);
+
+  /* Text */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-disabled:  #cbd5e1;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-accent: 0 0 16px rgba(13, 148, 136, 0.08);
+}
+
+/* Light theme specific overrides */
+body.light-theme::before {
+  background: radial-gradient(ellipse at 20% 30%, rgba(13, 148, 136, 0.03), transparent 70%);
+}
+
+body.light-theme .sidebar {
+  background: linear-gradient(180deg, var(--bg-card) 0%, #f8fafc 100%);
+}
+
+body.light-theme .topbar {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+body.light-theme .brand-name {
+  background: linear-gradient(135deg, #0f172a, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.light-theme .card-header {
+  background: rgba(248, 250, 252, 0.8);
+}
+
+body.light-theme .data-table th {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+body.light-theme .metric-card {
+  background: linear-gradient(135deg, var(--bg-card), #f8fafc);
+}
+
+body.light-theme .cls-item {
+  background: var(--bg-base);
+}
+
+body.light-theme .stage-dot {
+  background: var(--bg-base);
+}
+
+body.light-theme .form-input,
+body.light-theme .form-select,
+body.light-theme .form-textarea {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+body.light-theme .sim-result-body {
+  background: var(--bg-base);
+}
+
+body.light-theme .llm-response-content {
+  background: var(--bg-base);
+}
+
+body.light-theme .how-it-works {
+  background: var(--bg-base);
+}
+
+body.light-theme .api-key-field,
+body.light-theme .api-url-field {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+body.light-theme .preset-btn {
+  background: var(--bg-base);
+}
+
+body.light-theme .preset-btn:hover {
+  background: var(--bg-card-hover);
+}
+
+body.light-theme .toggle-sw {
+  background: #cbd5e1;
+}
+
+body.light-theme .toggle-input:checked + .toggle-sw {
+  background: var(--accent-dim);
+}
+
+body.light-theme .page-title {
+  background: linear-gradient(135deg, #0f172a, var(--text-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.light-theme .brand-sub {
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+body.light-theme .chart-wrap canvas {
+  filter: none;
+}
+
+/* Light theme adjustments for badges */
+body.light-theme .badge.dec-allow { 
+  background: rgba(5, 150, 105, 0.1); 
+  color: #065f46; 
+  border-color: rgba(5, 150, 105, 0.3); 
+}
+
+body.light-theme .badge.dec-block { 
+  background: rgba(220, 38, 38, 0.1); 
+  color: #991b1b; 
+  border-color: rgba(220, 38, 38, 0.3); 
+}
+
+body.light-theme .badge.dec-quarantine { 
+  background: rgba(217, 119, 6, 0.1); 
+  color: #92400e; 
+  border-color: rgba(217, 119, 6, 0.3); 
+}
+
+/* Light theme scrollbar */
+body.light-theme ::-webkit-scrollbar-track { background: #f1f5f9; }
+body.light-theme ::-webkit-scrollbar-thumb { background: #94a3b8; }
+body.light-theme ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Light theme modal overlay */
+body.light-theme .modal-overlay {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+/* Light theme key display */
+body.light-theme .api-key-display-box {
+  background: var(--bg-base);
+}
+
+/* Light theme code elements */
+body.light-theme code,
+body.light-theme .yaml-preview {
+  background: var(--bg-base);
+  color: var(--text-secondary);
+}
+
+/* Light theme toast */
+body.light-theme .toast {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Ensure Chart.js renders properly in light mode */
+body.light-theme canvas {
+  filter: none;
+}
+
+/* Light theme status pill adjustments */
+body.light-theme .status-pill {
+  color: #065f46;
+}
+
+body.light-theme .block-rate-pill {
+  color: #991b1b;
 }

@@ -91,12 +91,16 @@ function navigate(viewName, btn) {
 let timelineChart = null;
 
 function initCharts() {
-    Chart.defaults.color = '#9aaebf';
+    const isDark = !document.body.classList.contains('light-theme');
+    Chart.defaults.color = isDark ? '#9aaebf' : '#475569';
     Chart.defaults.font.family = 'Inter, sans-serif';
     Chart.defaults.font.size   = 11;
 
     const tlCtx = document.getElementById('timelineChart');
     if (tlCtx) {
+        if (timelineChart) {
+            timelineChart.destroy();
+        }
         timelineChart = new Chart(tlCtx, {
             type: 'line',
             data: {
@@ -747,7 +751,7 @@ async function runSimulator() {
                             
                             if (responseData.output_filter_decision === 'REDACT') {
                                 responseText.classList.add('warning');
-                                responseText.style.color = 'var(--yellow)';
+                                responseText.style.color = 'var(--warning)';
                             } else {
                                 responseText.style.color = '';
                             }
@@ -758,13 +762,13 @@ async function runSimulator() {
                         if (safetyFilterSpan) {
                             if (responseData.output_filter_decision === 'REDACT') {
                                 safetyFilterSpan.textContent = 'Redacted (PII removed)';
-                                safetyFilterSpan.style.color = 'var(--yellow)';
+                                safetyFilterSpan.style.color = 'var(--warning)';
                             } else if (responseData.threat_score > 0.5) {
                                 safetyFilterSpan.textContent = `Threat score: ${responseData.threat_score}`;
-                                safetyFilterSpan.style.color = 'var(--yellow)';
+                                safetyFilterSpan.style.color = 'var(--warning)';
                             } else {
                                 safetyFilterSpan.textContent = 'Clean';
-                                safetyFilterSpan.style.color = 'var(--green)';
+                                safetyFilterSpan.style.color = 'var(--success)';
                             }
                         }
                     }
@@ -787,11 +791,11 @@ async function runSimulator() {
                     if (responseText) {
                         responseText.textContent = `⚠️ Gateway error: ${responseData.error || responseData.detail || 'Request failed'}\n\nStatus: ${response.status}`;
                         responseText.classList.add('blocked');
-                        responseText.style.color = 'var(--red)';
+                        responseText.style.color = 'var(--danger)';
                     }
                     if (safetyFilterSpan) {
                         safetyFilterSpan.textContent = 'Error';
-                        safetyFilterSpan.style.color = 'var(--red)';
+                        safetyFilterSpan.style.color = 'var(--danger)';
                     }
                 }
             }
@@ -806,7 +810,7 @@ async function runSimulator() {
                 if (responseText) {
                     responseText.textContent = `⚠️ Network error: ${error.message}\n\nMake sure the backend is running at ${getBase()}`;
                     responseText.classList.add('blocked');
-                    responseText.style.color = 'var(--red)';
+                    responseText.style.color = 'var(--danger)';
                 }
             }
         }
@@ -820,11 +824,11 @@ async function runSimulator() {
             if (responseText) {
                 responseText.textContent = `⚠️ No LLM response was generated because the request was blocked at stage ${blockStage}.\n\nReason: ${blockStage === 2 ? 'Injection patterns detected in prompt' : blockStage === 3 ? 'PII detected in prompt' : blockStage === 6 ? 'PII detected in response' : 'Domain not in allow-list'}`;
                 responseText.classList.add('blocked');
-                responseText.style.color = 'var(--red)';
+                responseText.style.color = 'var(--danger)';
             }
             if (safetyFilterSpan) {
                 safetyFilterSpan.textContent = 'Blocked - No response';
-                safetyFilterSpan.style.color = 'var(--red)';
+                safetyFilterSpan.style.color = 'var(--danger)';
             }
             const responseTokensSpan = document.getElementById('responseTokens');
             const responseTimeSpan = document.getElementById('responseTime');
@@ -860,13 +864,13 @@ async function runSimulator() {
             
             resultBody.innerHTML = `<strong>Request blocked at stage ${blockStage}</strong><br><br>
                                     ${reasonText}<br><br>
-                                    <div class="ai-response-bubble" style="background: rgba(252,129,129,0.1); color: var(--red); margin-top: 12px; padding: 10px;">
+                                    <div class="ai-response-bubble" style="background: rgba(252,129,129,0.1); color: var(--danger); margin-top: 12px; padding: 10px;">
                                     ⚠️ The LLM response was blocked due to security policy violations.
                                     </div>`;
         } else if (finalDecision === 'ERROR') {
             resultBody.innerHTML = `<strong>Request Error</strong><br><br>
                                     There was an error processing your request. Check the console for details.<br><br>
-                                    <div class="ai-response-bubble" style="background: rgba(252,129,129,0.1); color: var(--red); margin-top: 12px; padding: 10px;">
+                                    <div class="ai-response-bubble" style="background: rgba(252,129,129,0.1); color: var(--danger); margin-top: 12px; padding: 10px;">
                                     ⚠️ Make sure the backend is running and the API key is valid.
                                     </div>`;
         } else {
@@ -968,6 +972,49 @@ function aiClassBadge(cls, subtype, score) {
         return `<div><span class="badge ai-clean">SAFE</span><span class="text-muted"> ${score || 99}%</span></div>`;
     }
     return `<div><span class="badge ai-inject">INJECTION</span><span class="text-muted"> ${score || 0}%</span></div>`;
+}
+
+// ── Theme Toggle ─────────────────────────────────────────────
+const themeToggle = document.getElementById('themeToggle');
+const sunIcon = themeToggle?.querySelector('.sun-icon');
+const moonIcon = themeToggle?.querySelector('.moon-icon');
+const toggleText = themeToggle?.querySelector('.theme-toggle-text');
+
+// Check for saved theme preference
+const savedTheme = localStorage.getItem('midguard-theme');
+if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+    if (sunIcon) sunIcon.style.display = 'none';
+    if (moonIcon) moonIcon.style.display = 'block';
+    if (toggleText) toggleText.textContent = 'Dark Mode';
+}
+
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        const isLight = document.body.classList.toggle('light-theme');
+        localStorage.setItem('midguard-theme', isLight ? 'light' : 'dark');
+        
+        if (isLight) {
+            if (sunIcon) sunIcon.style.display = 'none';
+            if (moonIcon) moonIcon.style.display = 'block';
+            if (toggleText) toggleText.textContent = 'Dark Mode';
+        } else {
+            if (sunIcon) sunIcon.style.display = 'block';
+            if (moonIcon) moonIcon.style.display = 'none';
+            if (toggleText) toggleText.textContent = 'Light Mode';
+        }
+        
+        // Update Chart.js defaults for the new theme
+        const isDark = !isLight;
+        Chart.defaults.color = isDark ? '#9aaebf' : '#475569';
+        
+        // Redraw charts if they exist
+        if (timelineChart) {
+            timelineChart.destroy();
+            initCharts();
+            loadDashboard();
+        }
+    });
 }
 
 // ── Init ──────────────────────────────────────────────────────
