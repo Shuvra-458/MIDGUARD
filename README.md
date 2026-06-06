@@ -433,14 +433,6 @@ GET /soc
 
 ---
 
-# 🏫 Institution
-
-Centre for Cybersecurity
-Faculty of Engineering & Technology (ITER)
-Siksha ‘O’ Anusandhan University
-Bhubaneswar, Odisha
-
----
 
 # 📚 References
 
